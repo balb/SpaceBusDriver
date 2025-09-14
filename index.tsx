@@ -64,6 +64,12 @@ class BootScene extends Phaser.Scene {
         graphics.fillCircle(8, 5, 5); // Head
         graphics.fillRect(4, 10, 8, 10); // Body
         graphics.generateTexture('passenger', 16, 20);
+        graphics.clear();
+
+        // --- Create Particle Texture ---
+        graphics.fillStyle(0xffffff, 1);
+        graphics.fillCircle(2, 2, 2);
+        graphics.generateTexture('particle', 4, 4);
         
         graphics.destroy();
     }
@@ -120,6 +126,7 @@ class MainScene extends Phaser.Scene {
     private homePlanet!: Phaser.GameObjects.Arc;
     private destPlanet!: Phaser.GameObjects.Arc;
     private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+    private thrusterEmitter!: Phaser.GameObjects.Particles.ParticleEmitter;
     
     private score = 0;
     private hasPassenger = false;
@@ -163,6 +170,22 @@ class MainScene extends Phaser.Scene {
         // TUNING: Increased drag for less "slippery" movement.
         this.player.setDrag(0.95);
         this.player.setMaxVelocity(400);
+
+        // --- Particle Emitter for Thruster ---
+        // FIX: The 'on' property is not a valid ParticleEmitterConfig property. Emission is controlled via the start() and stop() methods on the emitter instance.
+        this.thrusterEmitter = this.add.particles(0, 0, 'particle', {
+            speed: { min: 50, max: 150 },
+            scale: { start: 1.5, end: 0 },
+            alpha: { start: 1, end: 0 },
+            lifespan: 300,
+            quantity: 2,
+            frequency: 16,
+            blendMode: 'ADD',
+            tint: [0xffff00, 0xffd700, 0xffa500] // Yellow to orange gradient
+        });
+        // FIX: Emitters start on by default. Stop it initially as intended.
+        this.thrusterEmitter.stop();
+        this.thrusterEmitter.setDepth(-1); // Draw particles behind other objects
 
         // --- Alien ---
         // Ensure the alien doesn't spawn on top of the player.
@@ -232,12 +255,25 @@ class MainScene extends Phaser.Scene {
             this.physics.velocityFromRotation(this.player.rotation, FORWARD_THRUST_SPEED, (this.player.body as Phaser.Physics.Arcade.Body).velocity);
             // Ensure any braking acceleration is cancelled.
             this.player.setAcceleration(0, 0);
+            
+            // --- Handle Thruster Particles ---
+            this.updateThrusterEmitter();
+            // FIX: Use the start() method instead of setting the 'on' property, which is an EventEmitter method.
+            this.thrusterEmitter.start();
         } else if (this.cursors.down.isDown) {
             // Apply reverse acceleration to act as a brake.
             this.physics.velocityFromRotation(this.player.rotation, -REVERSE_ACCELERATION, (this.player.body as Phaser.Physics.Arcade.Body).acceleration);
+
+            // --- Stop Thruster Particles ---
+            // FIX: Use the stop() method instead of setting the 'on' property.
+            this.thrusterEmitter.stop();
         } else {
             // No thrust, so stop accelerating. Drag will slow the ship down.
             this.player.setAcceleration(0, 0);
+
+             // --- Stop Thruster Particles ---
+             // FIX: Use the stop() method instead of setting the 'on' property.
+             this.thrusterEmitter.stop();
         }
 
         // Wrap the player and alien around the screen edges
@@ -264,6 +300,24 @@ class MainScene extends Phaser.Scene {
                 this.spawnPassenger();
             }
         }
+    }
+
+    /**
+     * Updates the position and angle of the thruster particle emitter
+     * to match the back of the player's ship.
+     */
+    updateThrusterEmitter() {
+        // Calculate position at the back of the bus.
+        // Sprite is 32px long, scaled by 2. Origin is center. Offset is -16 * 2 = -32px.
+        const offset = new Phaser.Math.Vector2().setToPolar(this.player.rotation, -32);
+
+        this.thrusterEmitter.setPosition(this.player.x + offset.x, this.player.y + offset.y);
+
+        // Angle particles to shoot out the back
+        const angle = Phaser.Math.RadToDeg(this.player.rotation);
+        // FIX: The `setAngle` method in this version of Phaser likely expects separate
+        // min and max arguments to define a range, not a configuration object.
+        this.thrusterEmitter.setAngle(angle + 180 - 15, angle + 180 + 15);
     }
 
     handleGameOver() {
