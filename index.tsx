@@ -162,12 +162,20 @@ class MainScene extends Phaser.Scene {
         this.player.setMaxVelocity(400);
 
         // --- Alien ---
-        this.alien = this.physics.add.sprite(
-            Phaser.Math.Between(0, this.scale.width),
-            Phaser.Math.Between(0, this.scale.height),
-            'alien'
-        );
+        // Ensure the alien doesn't spawn on top of the player.
+        let alienX, alienY;
+        const safeDistance = 250; // Minimum distance from the player
+        const playerStartX = this.scale.width / 2;
+        const playerStartY = this.scale.height / 2;
+        
+        do {
+            alienX = Phaser.Math.Between(0, this.scale.width);
+            alienY = Phaser.Math.Between(0, this.scale.height);
+        } while (Phaser.Math.Distance.Between(playerStartX, playerStartY, alienX, alienY) < safeDistance);
+
+        this.alien = this.physics.add.sprite(alienX, alienY, 'alien');
         this.alien.setScale(2.5).setOrigin(0.5);
+
 
         // --- Passenger ---
         this.passengers = this.physics.add.group();
@@ -192,4 +200,108 @@ class MainScene extends Phaser.Scene {
         passenger.setScale(2).setOrigin(0.5).refreshBody();
     }
 
-    handlePickupPassenger(player
+    handlePickupPassenger(player: Phaser.Types.Physics.Arcade.GameObjectWithBody, passenger: Phaser.Types.Physics.Arcade.GameObjectWithBody) {
+        if (!this.hasPassenger) {
+            // Cast the passenger back to a sprite to access sprite-specific methods like destroy()
+            const passengerSprite = passenger as Phaser.Physics.Arcade.Sprite;
+            passengerSprite.destroy();
+            
+            this.hasPassenger = true;
+            this.game.events.emit('updatePassengerStatus', this.hasPassenger);
+        }
+    }
+
+    update() {
+        // --- Player Movement ---
+        if (this.cursors.left.isDown) {
+            this.player.setAngularVelocity(-PLAYER_ROTATION_SPEED);
+        } else if (this.cursors.right.isDown) {
+            this.player.setAngularVelocity(PLAYER_ROTATION_SPEED);
+        } else {
+            this.player.setAngularVelocity(0);
+        }
+
+        if (this.cursors.up.isDown) {
+            this.physics.velocityFromRotation(this.player.rotation, ACCELERATION, (this.player.body.velocity as Phaser.Math.Vector2));
+        }
+
+        // Wrap the player and alien around the screen edges
+        this.physics.world.wrap(this.player, 32);
+        this.physics.world.wrap(this.alien, 32);
+
+
+        // --- Alien AI ---
+        this.physics.moveToObject(this.alien, this.player, ALIEN_SPEED);
+
+
+        // --- Passenger Drop-off ---
+        if (this.hasPassenger) {
+            const distanceToDest = Phaser.Math.Distance.Between(
+                this.player.x, this.player.y,
+                this.destPlanet.x, this.destPlanet.y
+            );
+
+            if (distanceToDest < this.destPlanet.radius + 16) { // 16 is ~half player width
+                this.hasPassenger = false;
+                this.score += 10;
+                this.game.events.emit('updateScore', this.score);
+                this.game.events.emit('updatePassengerStatus', this.hasPassenger);
+                this.spawnPassenger();
+            }
+        }
+    }
+
+    handleGameOver() {
+        // Stop all physics and animations
+        this.physics.pause();
+        this.player.setTint(0xff0000);
+
+        // Show "Game Over" text
+        this.add.text(
+            this.scale.width / 2,
+            this.scale.height / 2 - 50,
+            'GAME OVER',
+            { fontSize: '64px', color: '#ff0000' }
+        ).setOrigin(0.5);
+        
+        this.add.text(
+            this.scale.width / 2,
+            this.scale.height / 2 + 10,
+            `Final Score: ${this.score}`,
+            { fontSize: '32px' }
+        ).setOrigin(0.5);
+
+        this.add.text(
+            this.scale.width / 2,
+            this.scale.height / 2 + 60,
+            'Press Space to Restart',
+            { fontSize: '24px' }
+        ).setOrigin(0.5);
+
+        // Listen for the spacebar to restart the game
+        this.input.keyboard.once('keydown-SPACE', () => {
+            // Stop the UI scene before restarting the main scene
+            this.scene.stop('ui');
+            this.scene.restart();
+        });
+    }
+}
+
+// --- Phaser Game Configuration ---
+const config: Phaser.Types.Core.GameConfig = {
+    type: Phaser.AUTO,
+    width: 800,
+    height: 600,
+    parent: document.body,
+    physics: {
+        default: 'arcade',
+        arcade: {
+            // FIX: The gravity object requires both x and y properties to match the Vector2Like type.
+            gravity: { x: 0, y: 0 },
+        }
+    },
+    scene: [BootScene, MainScene, UIScene]
+};
+
+// --- Start the Game ---
+new Phaser.Game(config);
