@@ -56,11 +56,6 @@ export default class BootScene extends Phaser.Scene {
         graphics.fillRect(4, 10, 8, 10); // Body
         graphics.generateTexture('passenger', 16, 20);
         graphics.clear();
-
-        // --- Create Particle Texture ---
-        graphics.fillStyle(0xffffff, 1);
-        graphics.fillCircle(2, 2, 2);
-        graphics.generateTexture('particle', 4, 4);
         
         graphics.destroy();
     }

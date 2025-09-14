@@ -43,17 +43,19 @@
 
 ## 4. Game State
 
-- **Start:** The game begins with the player's bus near the Home Planet, a passenger at the Home Planet, and the alien at a random position a safe distance away.
+- **Title Screen:** The game begins on a retro-styled title screen featuring vector graphics. The player presses the **Spacebar** to start the game.
+- **Gameplay Start:** The game begins with the player's bus near the Home Planet, a passenger at the Home Planet, and the alien at a random position a safe distance away.
 - **Game Over:** Occurs when the player collides with the alien.
     - All game movement stops.
     - A "GAME OVER" message is displayed along with the final score.
-    - The player can restart the game by pressing the **Spacebar**.
+    - The player can restart the game by pressing the **Spacebar**, which returns them to the Title Screen.
 
 ## 5. Assets & Visuals
 
 All visual assets are generated programmatically (procedurally) at runtime.
 - **Background:** A black void with small, white, randomly placed rectangles representing stars, filling the entire game world.
 - **Space Bus:** A yellow rectangular body with a light blue "cockpit" section.
+- **Thruster Effect:** A yellow particle trail is emitted from the back of the bus when the player accelerates forward.
 - **Alien:** A green circle with a smaller black circle for an eye.
 - **Passenger:** A blue character with a circular head and a rectangular body.
 - **Planets:**
@@ -64,7 +66,9 @@ All visual assets are generated programmatically (procedurally) at runtime.
 
 - **Engine:** Phaser 3
 - **Language:** TypeScript
+- **File Structure:** The project is structured with each Phaser Scene in its own file within a `scenes/` directory for better organization and maintainability. A central `constants.ts` file holds shared game parameters for easy tuning.
 - **Scene Management:**
     - `BootScene`: Responsible for procedurally generating all textures once at the start of the game.
+    - `TitleScene`: Displays the retro-styled title screen and waits for player input to start the main game.
     - `MainScene`: Contains all core game logic, physics, camera control, and collision handling for the large world.
     - `UIScene`: Runs as a parallel overlay scene to display the score, status, and minimap border. It is decoupled from the main game via a global event bus for updates.

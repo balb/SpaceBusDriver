@@ -22,9 +22,6 @@ export default class MainScene extends Phaser.Scene {
     private homePlanet!: Phaser.GameObjects.Arc;
     private destPlanet!: Phaser.GameObjects.Arc;
     private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
-    // API FIX: In modern Phaser, ParticleEmitter is a GameObject that controls itself.
-    // The ParticleEmitterManager class has been removed.
-    private thrusterManager!: Phaser.GameObjects.Particles.ParticleEmitter;
     private stars!: Phaser.GameObjects.Group;
     
     private score = 0;
@@ -77,25 +74,8 @@ export default class MainScene extends Phaser.Scene {
         this.player.setMaxVelocity(400);
         this.player.setCollideWorldBounds(true);
         this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
-
-        // --- Particle Emitter for Thruster ---
-        // API FIX: `add.particles` returns a ParticleEmitter, which is both a GameObject and the emitter controller.
-        this.thrusterManager = this.add.particles(0, 0, 'particle', {
-            // angle will be updated dynamically
-            speed: { min: 50, max: 150 },
-            scale: { start: 1.5, end: 0 },
-            alpha: { start: 1, end: 0 },
-            lifespan: 300,
-            quantity: 2,
-            frequency: 16,
-            blendMode: 'ADD',
-            tint: 0xffff00,
-            emitting: false // Start turned off
-        });
-        
-        // API FIX: Set depth on the ParticleEmitter GameObject.
-        this.thrusterManager.setDepth(-1);
-
+        // FIX: Explicitly set depth to ensure player is rendered on top.
+        this.player.setDepth(10);
 
         // --- Alien ---
         // Ensure the alien doesn't spawn on top of the player.
@@ -114,6 +94,8 @@ export default class MainScene extends Phaser.Scene {
         // The alien texture is a 12px radius circle. We set the hitbox to be a smaller circle.
         (this.alien.body as Phaser.Physics.Arcade.Body).setCircle(10);
         this.alien.setCollideWorldBounds(true);
+        // FIX: Set alien depth to ensure it's rendered above the background.
+        this.alien.setDepth(5);
 
 
         // --- Passenger ---
@@ -177,24 +159,12 @@ export default class MainScene extends Phaser.Scene {
             // Ensure any braking acceleration is cancelled.
             this.player.setAcceleration(0, 0);
             
-            // --- Handle Thruster Particles ---
-            this.updateThrusterEmitter();
-            // API FIX: Call start() on the emitter itself.
-            this.thrusterManager.start();
         } else if (this.cursors.down.isDown) {
             // Apply reverse acceleration to act as a brake.
             this.physics.velocityFromRotation(this.player.rotation, -REVERSE_ACCELERATION, (this.player.body as Phaser.Physics.Arcade.Body).acceleration);
-
-            // --- Stop Thruster Particles ---
-            // API FIX: Call stop() on the emitter itself.
-            this.thrusterManager.stop();
         } else {
             // No thrust, so stop accelerating. Drag will slow the ship down.
             this.player.setAcceleration(0, 0);
-
-             // --- Stop Thruster Particles ---
-             // API FIX: Call stop() on the emitter itself.
-             this.thrusterManager.stop();
         }
 
         // --- Alien AI ---
@@ -216,24 +186,6 @@ export default class MainScene extends Phaser.Scene {
                 this.spawnPassenger();
             }
         }
-    }
-
-    /**
-     * Updates the position and angle of the thruster particle emitter
-     * to match the back of the player's ship.
-     */
-    updateThrusterEmitter() {
-        // Calculate position at the back of the bus.
-        // Sprite is 32px long, scaled by 2. Origin is center. Offset is -16 * 2 = -32px.
-        const offset = new Phaser.Math.Vector2().setToPolar(this.player.rotation, -32);
-
-        // API FIX: Move the ParticleEmitter GameObject to the new position.
-        this.thrusterManager.setPosition(this.player.x + offset.x, this.player.y + offset.y);
-
-        // Angle particles to shoot out the back
-        const baseAngle = Phaser.Math.RadToDeg(this.player.rotation) + 180;
-        // API FIX: Update the angle on the emitter itself.
-        this.thrusterManager.setAngle({ min: baseAngle - 15, max: baseAngle + 15 });
     }
 
     handleGameOver() {
