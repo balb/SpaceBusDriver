@@ -5,8 +5,9 @@
 import * as Phaser from 'phaser';
 
 // --- Game Constants ---
-// TUNING: Reduced acceleration and rotation for more controlled movement.
-const ACCELERATION = 300;
+// TUNING: Renamed ACCELERATION for clarity. Forward thrust sets velocity directly.
+const FORWARD_THRUST_SPEED = 300;
+const REVERSE_ACCELERATION = 150;
 const PLAYER_ROTATION_SPEED = 150; // in degrees/sec
 const ALIEN_SPEED = 180;
 
@@ -156,6 +157,8 @@ class MainScene extends Phaser.Scene {
         // --- Player (Space Bus) ---
         this.player = this.physics.add.sprite(this.scale.width / 2, this.scale.height / 2, 'bus');
         this.player.setOrigin(0.5).setScale(2);
+        // Reduce hitbox size to be about 80% of the visual sprite for fairer collisions
+        (this.player.body as Phaser.Physics.Arcade.Body).setSize(26, 12);
         this.player.setDamping(true);
         // TUNING: Increased drag for less "slippery" movement.
         this.player.setDrag(0.95);
@@ -175,6 +178,8 @@ class MainScene extends Phaser.Scene {
 
         this.alien = this.physics.add.sprite(alienX, alienY, 'alien');
         this.alien.setScale(2.5).setOrigin(0.5);
+        // The alien texture is a 12px radius circle. We set the hitbox to be a smaller circle.
+        (this.alien.body as Phaser.Physics.Arcade.Body).setCircle(10);
 
 
         // --- Passenger ---
@@ -212,7 +217,7 @@ class MainScene extends Phaser.Scene {
     }
 
     update() {
-        // --- Player Movement ---
+        // --- Player Rotation ---
         if (this.cursors.left.isDown) {
             this.player.setAngularVelocity(-PLAYER_ROTATION_SPEED);
         } else if (this.cursors.right.isDown) {
@@ -221,8 +226,18 @@ class MainScene extends Phaser.Scene {
             this.player.setAngularVelocity(0);
         }
 
+        // --- Player Thrust (Hybrid: direct velocity for forward, acceleration for reverse) ---
         if (this.cursors.up.isDown) {
-            this.physics.velocityFromRotation(this.player.rotation, ACCELERATION, (this.player.body.velocity as Phaser.Math.Vector2));
+            // Set velocity directly for a more immediate "arcade" feel.
+            this.physics.velocityFromRotation(this.player.rotation, FORWARD_THRUST_SPEED, (this.player.body as Phaser.Physics.Arcade.Body).velocity);
+            // Ensure any braking acceleration is cancelled.
+            this.player.setAcceleration(0, 0);
+        } else if (this.cursors.down.isDown) {
+            // Apply reverse acceleration to act as a brake.
+            this.physics.velocityFromRotation(this.player.rotation, -REVERSE_ACCELERATION, (this.player.body as Phaser.Physics.Arcade.Body).acceleration);
+        } else {
+            // No thrust, so stop accelerating. Drag will slow the ship down.
+            this.player.setAcceleration(0, 0);
         }
 
         // Wrap the player and alien around the screen edges
