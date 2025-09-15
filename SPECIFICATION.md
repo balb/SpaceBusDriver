@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-**Space Bus Driver** is a 2D top-down arcade game set in space. The player pilots a space bus across a large, scrollable map, picking up passengers from one planet and safely transporting them to another, all while being pursued by a hostile alien. The goal is to achieve the highest score possible.
+**Space Bus Driver** is a 2D top-down arcade game set in space. The player pilots a space bus across a large, scrollable map, picking up passengers from one planet and safely transporting them to another, all while being pursued by hostile aliens. The goal is to achieve the highest score possible.
 
 ## 2. Core Gameplay Mechanics
 
@@ -20,16 +20,21 @@
 4.  The player drops off the passenger by getting close to the Destination Planet.
 5.  Upon successful drop-off, the player's score increases, and a new passenger immediately spawns back at the Home Planet, restarting the loop.
 
-### 2.3. The Alien
-- A single alien acts as the primary obstacle.
-- The alien constantly and directly moves towards the player's current position at a fixed speed.
-- The alien collides with the world boundaries.
-- Contact between the player's bus and the alien results in a "Game Over".
+### 2.3. The Aliens
+- Multiple aliens act as the primary obstacles, each with a unique speed and appearance.
+- **AI Behavior:** Aliens have two states: roaming and chasing.
+    - **Roaming:** When the player is far away, aliens move slowly in random directions, changing course every few seconds.
+    - **Chasing:** When the player comes within an alien's detection radius, it will begin to actively and directly chase the player at its top speed.
+- The aliens collide with the world boundaries.
+- Contact between the player's bus and any alien results in a "Game Over".
+- **Red Alien (Fast):** The most dangerous alien, it moves at a high speed, forcing the player to stay alert. Its appearance is aggressive. There are 4 in the world.
+- **Green Alien (Medium):** The original alien, it moves at a moderate speed and poses a standard threat. There are 6 in the world.
+- **Purple Alien (Slow):** The least dangerous alien, it moves slowly and is easier to evade, but can still corner an unwary player. Its appearance is sluggish or sleepy. There are 6 in the world.
 
 ### 2.4. Game World & Camera
 - The game world is a large, rectangular area, equivalent to a 4x4 grid of screens (3200x2400 pixels).
 - The main camera smoothly follows the player's bus as it moves through the world.
-- The world has hard boundaries. The player bus and the alien cannot pass through the edges of the world and will collide with them.
+- The world has hard boundaries. The player bus and the aliens cannot pass through the edges of the world and will collide with them.
 - The Home and Destination planets are placed far apart to encourage exploration of the large map.
 
 ## 3. Scoring & UI
@@ -38,14 +43,14 @@
 - A status message below the score informs the player of their current objective: "Find passenger" or "Drop off passenger".
 - A **minimap** is displayed in the top-right corner.
     - It shows a scaled-down, real-time overview of the entire game world.
-    - It displays markers for the player's bus, the alien, the Home Planet, and the Destination Planet.
+    - It displays markers for the player's bus, all aliens, the Home Planet, and the Destination Planet.
 - Players earn **10 points** for each successfully delivered passenger.
 
 ## 4. Game State
 
 - **Title Screen:** The game begins on a retro-styled title screen featuring vector graphics. The player presses the **Spacebar** to start the game.
-- **Gameplay Start:** The game begins with the player's bus near the Home Planet, a passenger at the Home Planet, and the alien at a random position a safe distance away.
-- **Game Over:** Occurs when the player collides with the alien.
+- **Gameplay Start:** The game begins with the player's bus near the Home Planet, a passenger at the Home Planet, and the aliens at random positions a safe distance away.
+- **Game Over:** Occurs when the player collides with any alien.
     - All game movement stops.
     - A "GAME OVER" message is displayed along with the final score.
     - The player can restart the game by pressing the **Spacebar**, which returns them to the Title Screen.
@@ -55,7 +60,10 @@
 All visual assets are generated programmatically (procedurally) at runtime.
 - **Background:** A black void with small, white, randomly placed rectangles representing stars, filling the entire game world.
 - **Space Bus:** A yellow rectangular body with a light blue "cockpit" section.
-- **Alien:** A green circle with a smaller black circle for an eye.
+- **Aliens:**
+    - **Red Alien:** A red circle with a single, aggressive-looking triangular eye.
+    - **Green Alien:** A green circle with a smaller black circle for an eye, looking off to the side.
+    - **Purple Alien:** A purple circle with a single, sleepy-looking oval eye.
 - **Passenger:** A blue character with a circular head and a rectangular body.
 - **Planets:**
     - **Home Planet:** A medium-sized blue circle.

@@ -49,6 +49,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             this.scene.physics.velocityFromRotation(this.rotation, FORWARD_THRUST_SPEED, (this.body as Phaser.Physics.Arcade.Body).velocity);
             this.setAcceleration(0, 0);
         } else if (this.cursors.down.isDown) {
+            // FIX: Replaced non-existent `accelerationFromRotation` with `velocityFromRotation`.
             this.scene.physics.velocityFromRotation(this.rotation, -REVERSE_ACCELERATION, (this.body as Phaser.Physics.Arcade.Body).acceleration);
         } else {
             this.setAcceleration(0, 0);

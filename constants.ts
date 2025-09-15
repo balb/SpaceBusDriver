@@ -8,7 +8,16 @@
 export const FORWARD_THRUST_SPEED = 300;
 export const REVERSE_ACCELERATION = 150;
 export const PLAYER_ROTATION_SPEED = 150; // in degrees/sec
-export const ALIEN_SPEED = 180;
+
+// Alien Speeds
+export const ALIEN_SPEED_RED = 220;    // Fastest
+export const ALIEN_SPEED_GREEN = 180;  // Medium
+export const ALIEN_SPEED_PURPLE = 130; // Slowest
+
+// Alien AI
+export const ALIEN_DETECTION_RADIUS = 400;
+export const ALIEN_ROAM_SPEED = 70;
+export const ALIEN_ROAM_CHANGE_DIR_DELAY = 3000; // ms
 
 // World and Minimap constants
 export const WORLD_WIDTH = 800 * 4;

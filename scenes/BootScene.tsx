@@ -42,13 +42,36 @@ export default class BootScene extends Phaser.Scene {
         graphics.generateTexture('bus', 32, 16);
         graphics.clear();
 
-        // --- Create Alien Texture ---
-        graphics.fillStyle(0x00ff00, 1); // Green body
+        // --- Create Alien Textures ---
+        // Red Alien (Fast)
+        graphics.fillStyle(0xff4136, 1); // Red body
+        graphics.fillCircle(12, 12, 12);
+        graphics.fillStyle(0x000000, 1); // Black angry eye
+        graphics.beginPath();
+        graphics.moveTo(13, 7);
+        graphics.lineTo(19, 10);
+        graphics.lineTo(13, 13);
+        graphics.closePath();
+        graphics.fillPath();
+        graphics.generateTexture('alien-red', 24, 24);
+        graphics.clear();
+
+        // Green Alien (Medium)
+        graphics.fillStyle(0x2ecc40, 1); // Green body
         graphics.fillCircle(12, 12, 12);
         graphics.fillStyle(0x000000, 1); // Black eye
         graphics.fillCircle(16, 8, 4);
-        graphics.generateTexture('alien', 24, 24);
+        graphics.generateTexture('alien-green', 24, 24);
         graphics.clear();
+
+        // Purple Alien (Slow)
+        graphics.fillStyle(0xb10dc9, 1); // Purple body
+        graphics.fillCircle(12, 12, 12);
+        graphics.fillStyle(0x000000, 1); // Black sleepy eye
+        graphics.fillEllipse(17, 9, 8, 4);
+        graphics.generateTexture('alien-purple', 24, 24);
+        graphics.clear();
+
 
         // --- Create Passenger Texture ---
         graphics.fillStyle(0x0000ff, 1); // Blue body

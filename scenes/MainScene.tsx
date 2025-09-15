@@ -4,7 +4,9 @@
 */
 import * as Phaser from 'phaser';
 import {
-    ALIEN_SPEED,
+    ALIEN_SPEED_RED,
+    ALIEN_SPEED_GREEN,
+    ALIEN_SPEED_PURPLE,
     WORLD_WIDTH,
     WORLD_HEIGHT,
     MINIMAP_WIDTH,
@@ -17,7 +19,7 @@ import Alien from '../sprites/Alien';
 // --- Main Game Scene ---
 export default class MainScene extends Phaser.Scene {
     private player!: Player;
-    private alien!: Alien;
+    private aliens!: Phaser.Physics.Arcade.Group;
     private passengers!: Phaser.Physics.Arcade.Group;
     private homePlanet!: Phaser.GameObjects.Arc;
     private destPlanet!: Phaser.GameObjects.Arc;
@@ -70,17 +72,38 @@ export default class MainScene extends Phaser.Scene {
         this.player = new Player(this, playerStartX, playerStartY, this.cursors);
         this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
         
-        // --- Alien ---
-        // Ensure the alien doesn't spawn on top of the player.
-        let alienX, alienY;
-        const safeDistance = 400; // Minimum distance from the player
+        // --- Aliens ---
+        this.aliens = this.physics.add.group();
+        const spawnAlien = (texture: string, speed: number) => {
+            let alienX, alienY;
+            const safeDistance = 400; // Minimum distance from the player
+            
+            do {
+                alienX = Phaser.Math.Between(0, WORLD_WIDTH);
+                alienY = Phaser.Math.Between(0, WORLD_HEIGHT);
+            } while (Phaser.Math.Distance.Between(playerStartX, playerStartY, alienX, alienY) < safeDistance);
+            
+            // The Alien class now accepts a texture key
+            const alien = new Alien(this, alienX, alienY, texture, this.player, speed);
+            this.aliens.add(alien);
+        };
         
-        do {
-            alienX = Phaser.Math.Between(0, WORLD_WIDTH);
-            alienY = Phaser.Math.Between(0, WORLD_HEIGHT);
-        } while (Phaser.Math.Distance.Between(playerStartX, playerStartY, alienX, alienY) < safeDistance);
+        // Spawn multiple aliens of each type
+        const alienCounts = {
+            red: 4,
+            green: 6,
+            purple: 6
+        };
 
-        this.alien = new Alien(this, alienX, alienY, this.player, ALIEN_SPEED);
+        for (let i = 0; i < alienCounts.red; i++) {
+            spawnAlien('alien-red', ALIEN_SPEED_RED);
+        }
+        for (let i = 0; i < alienCounts.green; i++) {
+            spawnAlien('alien-green', ALIEN_SPEED_GREEN);
+        }
+        for (let i = 0; i < alienCounts.purple; i++) {
+            spawnAlien('alien-purple', ALIEN_SPEED_PURPLE);
+        }
 
 
         // --- Passenger ---
@@ -89,7 +112,7 @@ export default class MainScene extends Phaser.Scene {
         
         // --- Collisions ---
         this.physics.add.overlap(this.player, this.passengers, this.handlePickupPassenger, undefined, this);
-        this.physics.add.collider(this.player, this.alien, this.handleGameOver, undefined, this);
+        this.physics.add.collider(this.player, this.aliens, this.handleGameOver, undefined, this);
 
         // --- Minimap ---
         const minimapX = this.scale.width - MINIMAP_WIDTH - 10;
@@ -115,9 +138,8 @@ export default class MainScene extends Phaser.Scene {
 
     handlePickupPassenger(player: Phaser.Types.Physics.Arcade.GameObjectWithBody, passenger: Phaser.Types.Physics.Arcade.GameObjectWithBody) {
         if (!this.player.hasPassenger) {
-            // Cast the passenger back to a sprite to access sprite-specific methods like destroy()
-            const passengerSprite = passenger as Phaser.Physics.Arcade.Sprite;
-            passengerSprite.destroy();
+            // The destroy() method exists on the base GameObject, so no cast is needed.
+            passenger.destroy();
             
             this.player.pickupPassenger();
             this.game.events.emit('updatePassengerStatus', this.player.hasPassenger);
