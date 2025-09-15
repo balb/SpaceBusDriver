@@ -4,9 +4,6 @@
 */
 import * as Phaser from 'phaser';
 import {
-    FORWARD_THRUST_SPEED,
-    REVERSE_ACCELERATION,
-    PLAYER_ROTATION_SPEED,
     ALIEN_SPEED,
     WORLD_WIDTH,
     WORLD_HEIGHT,
@@ -14,10 +11,13 @@ import {
     MINIMAP_HEIGHT
 } from '../constants';
 
+import Player from '../sprites/Player';
+import Alien from '../sprites/Alien';
+
 // --- Main Game Scene ---
 export default class MainScene extends Phaser.Scene {
-    private player!: Phaser.Physics.Arcade.Sprite;
-    private alien!: Phaser.Physics.Arcade.Sprite;
+    private player!: Player;
+    private alien!: Alien;
     private passengers!: Phaser.Physics.Arcade.Group;
     private homePlanet!: Phaser.GameObjects.Arc;
     private destPlanet!: Phaser.GameObjects.Arc;
@@ -25,7 +25,6 @@ export default class MainScene extends Phaser.Scene {
     private stars!: Phaser.GameObjects.Group;
     
     private score = 0;
-    private hasPassenger = false;
 
     // FIX: Explicitly declare scene properties to satisfy TypeScript.
     add!: Phaser.GameObjects.GameObjectFactory;
@@ -43,7 +42,6 @@ export default class MainScene extends Phaser.Scene {
 
     create() {
         this.score = 0;
-        this.hasPassenger = false;
 
         // --- Set World and Camera Bounds ---
         this.physics.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
@@ -63,47 +61,31 @@ export default class MainScene extends Phaser.Scene {
         this.homePlanet = this.add.circle(200, 300, 60, 0x6464ff).setZ(-1);
         this.destPlanet = this.add.circle(WORLD_WIDTH - 200, WORLD_HEIGHT - 300, 60, 0x64ff64).setZ(-1);
 
-        // --- Player (Space Bus) ---
-        this.player = this.physics.add.sprite(this.homePlanet.x + 150, this.homePlanet.y, 'bus');
-        this.player.setOrigin(0.5).setScale(2);
-        // Reduce hitbox size to be about 80% of the visual sprite for fairer collisions
-        (this.player.body as Phaser.Physics.Arcade.Body).setSize(26, 12);
-        this.player.setDamping(true);
-        // TUNING: Increased drag for less "slippery" movement.
-        this.player.setDrag(0.95);
-        this.player.setMaxVelocity(400);
-        this.player.setCollideWorldBounds(true);
-        this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
-        // FIX: Explicitly set depth to ensure player is rendered on top.
-        this.player.setDepth(10);
+        // --- Controls (must be created before Player) ---
+        this.cursors = this.input.keyboard.createCursorKeys();
 
+        // --- Player (Space Bus) ---
+        const playerStartX = this.homePlanet.x + 150;
+        const playerStartY = this.homePlanet.y;
+        this.player = new Player(this, playerStartX, playerStartY, this.cursors);
+        this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
+        
         // --- Alien ---
         // Ensure the alien doesn't spawn on top of the player.
         let alienX, alienY;
         const safeDistance = 400; // Minimum distance from the player
-        const playerStartX = this.player.x;
-        const playerStartY = this.player.y;
         
         do {
             alienX = Phaser.Math.Between(0, WORLD_WIDTH);
             alienY = Phaser.Math.Between(0, WORLD_HEIGHT);
         } while (Phaser.Math.Distance.Between(playerStartX, playerStartY, alienX, alienY) < safeDistance);
 
-        this.alien = this.physics.add.sprite(alienX, alienY, 'alien');
-        this.alien.setScale(2.5).setOrigin(0.5);
-        // The alien texture is a 12px radius circle. We set the hitbox to be a smaller circle.
-        (this.alien.body as Phaser.Physics.Arcade.Body).setCircle(10);
-        this.alien.setCollideWorldBounds(true);
-        // FIX: Set alien depth to ensure it's rendered above the background.
-        this.alien.setDepth(5);
+        this.alien = new Alien(this, alienX, alienY, this.player, ALIEN_SPEED);
 
 
         // --- Passenger ---
         this.passengers = this.physics.add.group();
         this.spawnPassenger();
-
-        // --- Controls ---
-        this.cursors = this.input.keyboard.createCursorKeys();
         
         // --- Collisions ---
         this.physics.add.overlap(this.player, this.passengers, this.handlePickupPassenger, undefined, this);
@@ -122,7 +104,7 @@ export default class MainScene extends Phaser.Scene {
         // Launch the UI scene in parallel and emit initial state to the global bus
         this.scene.launch('ui');
         this.game.events.emit('updateScore', this.score);
-        this.game.events.emit('updatePassengerStatus', this.hasPassenger);
+        this.game.events.emit('updatePassengerStatus', this.player.hasPassenger);
     }
 
     spawnPassenger() {
@@ -132,57 +114,29 @@ export default class MainScene extends Phaser.Scene {
     }
 
     handlePickupPassenger(player: Phaser.Types.Physics.Arcade.GameObjectWithBody, passenger: Phaser.Types.Physics.Arcade.GameObjectWithBody) {
-        if (!this.hasPassenger) {
+        if (!this.player.hasPassenger) {
             // Cast the passenger back to a sprite to access sprite-specific methods like destroy()
             const passengerSprite = passenger as Phaser.Physics.Arcade.Sprite;
             passengerSprite.destroy();
             
-            this.hasPassenger = true;
-            this.game.events.emit('updatePassengerStatus', this.hasPassenger);
+            this.player.pickupPassenger();
+            this.game.events.emit('updatePassengerStatus', this.player.hasPassenger);
         }
     }
 
     update() {
-        // --- Player Rotation ---
-        if (this.cursors.left.isDown) {
-            this.player.setAngularVelocity(-PLAYER_ROTATION_SPEED);
-        } else if (this.cursors.right.isDown) {
-            this.player.setAngularVelocity(PLAYER_ROTATION_SPEED);
-        } else {
-            this.player.setAngularVelocity(0);
-        }
-
-        // --- Player Thrust (Hybrid: direct velocity for forward, acceleration for reverse) ---
-        if (this.cursors.up.isDown) {
-            // Set velocity directly for a more immediate "arcade" feel.
-            this.physics.velocityFromRotation(this.player.rotation, FORWARD_THRUST_SPEED, (this.player.body as Phaser.Physics.Arcade.Body).velocity);
-            // Ensure any braking acceleration is cancelled.
-            this.player.setAcceleration(0, 0);
-            
-        } else if (this.cursors.down.isDown) {
-            // Apply reverse acceleration to act as a brake.
-            this.physics.velocityFromRotation(this.player.rotation, -REVERSE_ACCELERATION, (this.player.body as Phaser.Physics.Arcade.Body).acceleration);
-        } else {
-            // No thrust, so stop accelerating. Drag will slow the ship down.
-            this.player.setAcceleration(0, 0);
-        }
-
-        // --- Alien AI ---
-        this.physics.moveToObject(this.alien, this.player, ALIEN_SPEED);
-
-
         // --- Passenger Drop-off ---
-        if (this.hasPassenger) {
+        if (this.player.hasPassenger) {
             const distanceToDest = Phaser.Math.Distance.Between(
                 this.player.x, this.player.y,
                 this.destPlanet.x, this.destPlanet.y
             );
 
             if (distanceToDest < this.destPlanet.radius + 16) { // 16 is ~half player width
-                this.hasPassenger = false;
+                this.player.dropOffPassenger();
                 this.score += 10;
                 this.game.events.emit('updateScore', this.score);
-                this.game.events.emit('updatePassengerStatus', this.hasPassenger);
+                this.game.events.emit('updatePassengerStatus', this.player.hasPassenger);
                 this.spawnPassenger();
             }
         }

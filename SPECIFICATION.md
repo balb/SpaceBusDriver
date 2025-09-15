@@ -55,7 +55,6 @@
 All visual assets are generated programmatically (procedurally) at runtime.
 - **Background:** A black void with small, white, randomly placed rectangles representing stars, filling the entire game world.
 - **Space Bus:** A yellow rectangular body with a light blue "cockpit" section.
-- **Thruster Effect:** A yellow particle trail is emitted from the back of the bus when the player accelerates forward.
 - **Alien:** A green circle with a smaller black circle for an eye.
 - **Passenger:** A blue character with a circular head and a rectangular body.
 - **Planets:**
@@ -66,9 +65,9 @@ All visual assets are generated programmatically (procedurally) at runtime.
 
 - **Engine:** Phaser 3
 - **Language:** TypeScript
-- **File Structure:** The project is structured with each Phaser Scene in its own file within a `scenes/` directory for better organization and maintainability. A central `constants.ts` file holds shared game parameters for easy tuning.
+- **File Structure:** The project is organized by responsibility. Phaser Scenes, which manage game state and flow, are in a `scenes/` directory. Reusable game entities (like the Player and Alien) are defined as classes in a `sprites/` directory. A central `constants.ts` file holds shared game parameters for easy tuning.
 - **Scene Management:**
     - `BootScene`: Responsible for procedurally generating all textures once at the start of the game.
     - `TitleScene`: Displays the retro-styled title screen and waits for player input to start the main game.
-    - `MainScene`: Contains all core game logic, physics, camera control, and collision handling for the large world.
+    - `MainScene`: Contains core game logic, camera control, and collision handling, acting as a director for the various game entities.
     - `UIScene`: Runs as a parallel overlay scene to display the score, status, and minimap border. It is decoupled from the main game via a global event bus for updates.
