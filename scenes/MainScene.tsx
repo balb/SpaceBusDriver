@@ -113,6 +113,7 @@ export default class MainScene extends Phaser.Scene {
         // --- Collisions ---
         this.physics.add.overlap(this.player, this.passengers, this.handlePickupPassenger, undefined, this);
         this.physics.add.collider(this.player, this.aliens, this.handleGameOver, undefined, this);
+        this.physics.add.collider(this.aliens, this.aliens); // Make aliens bounce off each other
 
         // --- Minimap ---
         const minimapX = this.scale.width - MINIMAP_WIDTH - 10;

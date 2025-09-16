@@ -26,6 +26,7 @@
     - **Roaming:** When the player is far away, aliens move slowly in random directions, changing course every few seconds.
     - **Chasing:** When the player comes within an alien's detection radius, it will begin to actively and directly chase the player at its top speed.
 - The aliens collide with the world boundaries.
+- Aliens will also collide and bounce off of each other.
 - Contact between the player's bus and any alien results in a "Game Over".
 - **Red Alien (Fast):** The most dangerous alien, it moves at a high speed, forcing the player to stay alert. Its appearance is aggressive. There are 4 in the world.
 - **Green Alien (Medium):** The original alien, it moves at a moderate speed and poses a standard threat. There are 6 in the world.
