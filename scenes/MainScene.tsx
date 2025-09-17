@@ -26,7 +26,8 @@ export default class MainScene extends Phaser.Scene {
     private busStops!: Phaser.Physics.Arcade.StaticGroup;
     private destPlanet!: Phaser.GameObjects.Image;
     private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
-    private stars!: Phaser.GameObjects.Group;
+    private starsFar!: Phaser.GameObjects.Group;
+    private starsNear!: Phaser.GameObjects.Group;
     
     private score = 0;
 
@@ -53,18 +54,34 @@ export default class MainScene extends Phaser.Scene {
         this.physics.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
         this.cameras.main.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
 
-        // --- Background Stars ---
-        this.stars = this.add.group();
-        for (let i = 0; i < 400; i++) {
+        // --- Background Stars (with parallax effect) ---
+        this.starsFar = this.add.group();
+        this.starsNear = this.add.group();
+
+        // Layer 1: Far stars (slow parallax)
+        for (let i = 0; i < 300; i++) {
             const x = Phaser.Math.Between(0, WORLD_WIDTH);
             const y = Phaser.Math.Between(0, WORLD_HEIGHT);
-            const size = Phaser.Math.Between(1, 3);
-            const alpha = Phaser.Math.FloatBetween(0.5, 1);
-            this.stars.add(this.add.rectangle(x, y, size, size, 0xffffff, alpha));
+            const size = Phaser.Math.Between(1, 2);
+            const alpha = Phaser.Math.FloatBetween(0.2, 0.6);
+            const star = this.add.rectangle(x, y, size, size, 0xffffff, alpha);
+            star.setScrollFactor(0.3).setDepth(-3); // Moves slowly with camera
+            this.starsFar.add(star);
+        }
+
+        // Layer 2: Near stars (faster parallax)
+        for (let i = 0; i < 150; i++) {
+            const x = Phaser.Math.Between(0, WORLD_WIDTH);
+            const y = Phaser.Math.Between(0, WORLD_HEIGHT);
+            const size = Phaser.Math.Between(2, 4);
+            const alpha = Phaser.Math.FloatBetween(0.6, 1.0);
+            const star = this.add.rectangle(x, y, size, size, 0xffffff, alpha);
+            star.setScrollFactor(0.6).setDepth(-2); // Moves faster with camera
+            this.starsNear.add(star);
         }
 
         // --- Planets ---
-        this.destPlanet = this.add.image(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 'planet-terminus').setZ(-1);
+        this.destPlanet = this.add.image(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 'planet-terminus').setDepth(-1);
         // The text's position is calculated relative to the image's center (origin) to align with the flag.
         this.add.text(this.destPlanet.x + 44.5, this.destPlanet.y - 72.5, 'Terminus', {
             fontSize: '16px',
@@ -82,7 +99,7 @@ export default class MainScene extends Phaser.Scene {
         ];
         
         busStopPositions.forEach(pos => {
-            this.busStops.create(pos.x, pos.y, 'planet-busstop').setCircle(60).setZ(-1);
+            this.busStops.create(pos.x, pos.y, 'planet-busstop').setCircle(60).setDepth(-1);
         });
 
 
@@ -149,7 +166,8 @@ export default class MainScene extends Phaser.Scene {
             .setName('minimap');
         minimap.setBackgroundColor(0x000000);
         minimap.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-        minimap.ignore(this.stars);
+        minimap.ignore(this.starsFar);
+        minimap.ignore(this.starsNear);
 
         // Launch the UI scene in parallel and emit initial state to the global bus
         this.scene.launch('ui');

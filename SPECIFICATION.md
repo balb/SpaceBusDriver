@@ -62,7 +62,7 @@
 ## 5. Assets & Visuals
 
 All visual assets are generated programmatically (procedurally) at runtime.
-- **Background:** A black void with small, white, randomly placed rectangles representing stars, filling the entire game world.
+- **Background:** A dynamic starfield with two layers of stars to create a parallax scrolling effect, giving a sense of depth. The distant layer has smaller, dimmer stars that move slowly, while the closer layer has larger, brighter stars that move faster.
 - **Space Bus:** A yellow rectangular body with a light blue "cockpit" section.
 - **Aliens:**
     - **Red Alien:** A red circle with a single, aggressive-looking triangular eye.
