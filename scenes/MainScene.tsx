@@ -4,9 +4,6 @@
 */
 import * as Phaser from 'phaser';
 import {
-    ALIEN_SPEED_RED,
-    ALIEN_SPEED_GREEN,
-    ALIEN_SPEED_PURPLE,
     WORLD_WIDTH,
     WORLD_HEIGHT,
     MINIMAP_WIDTH,
@@ -16,12 +13,13 @@ import {
 } from '../constants';
 
 import Player from '../sprites/Player';
-import Alien from '../sprites/Alien';
+import WorldBuilder from '../world/WorldBuilder';
+import EnemyManager from '../managers/EnemyManager';
 
 // --- Main Game Scene ---
 export default class MainScene extends Phaser.Scene {
     private player!: Player;
-    private aliens!: Phaser.Physics.Arcade.Group;
+    private enemyManager!: EnemyManager;
     private passengers!: Phaser.Physics.Arcade.Group;
     private busStops!: Phaser.Physics.Arcade.StaticGroup;
     private destPlanet!: Phaser.GameObjects.Image;
@@ -54,54 +52,14 @@ export default class MainScene extends Phaser.Scene {
         this.physics.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
         this.cameras.main.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
 
-        // --- Background Stars (with parallax effect) ---
-        this.starsFar = this.add.group();
-        this.starsNear = this.add.group();
+        // --- Background & Planets (Refactored) ---
+        const { starsFar, starsNear } = WorldBuilder.createStarfield(this);
+        this.starsFar = starsFar;
+        this.starsNear = starsNear;
 
-        // Layer 1: Far stars (slow parallax)
-        for (let i = 0; i < 300; i++) {
-            const x = Phaser.Math.Between(0, WORLD_WIDTH);
-            const y = Phaser.Math.Between(0, WORLD_HEIGHT);
-            const size = Phaser.Math.Between(1, 2);
-            const alpha = Phaser.Math.FloatBetween(0.2, 0.6);
-            const star = this.add.rectangle(x, y, size, size, 0xffffff, alpha);
-            star.setScrollFactor(0.3).setDepth(-3); // Moves slowly with camera
-            this.starsFar.add(star);
-        }
-
-        // Layer 2: Near stars (faster parallax)
-        for (let i = 0; i < 150; i++) {
-            const x = Phaser.Math.Between(0, WORLD_WIDTH);
-            const y = Phaser.Math.Between(0, WORLD_HEIGHT);
-            const size = Phaser.Math.Between(2, 4);
-            const alpha = Phaser.Math.FloatBetween(0.6, 1.0);
-            const star = this.add.rectangle(x, y, size, size, 0xffffff, alpha);
-            star.setScrollFactor(0.6).setDepth(-2); // Moves faster with camera
-            this.starsNear.add(star);
-        }
-
-        // --- Planets ---
-        this.destPlanet = this.add.image(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 'planet-terminus').setDepth(-1);
-        // The text's position is calculated relative to the image's center (origin) to align with the flag.
-        this.add.text(this.destPlanet.x + 44.5, this.destPlanet.y - 72.5, 'Terminus', {
-            fontSize: '16px',
-            color: '#000000',
-            fontStyle: 'bold'
-        }).setOrigin(0.5);
-
-        this.busStops = this.physics.add.staticGroup();
-        const busStopPositions = [
-            { x: 300, y: 400 },
-            { x: WORLD_WIDTH - 300, y: 500 },
-            { x: 400, y: WORLD_HEIGHT - 400 },
-            { x: WORLD_WIDTH - 500, y: WORLD_HEIGHT - 600 },
-            { x: WORLD_WIDTH / 2, y: 300 },
-        ];
-        
-        busStopPositions.forEach(pos => {
-            this.busStops.create(pos.x, pos.y, 'planet-busstop').setCircle(60).setDepth(-1);
-        });
-
+        const { destPlanet, busStops } = WorldBuilder.createPlanets(this);
+        this.destPlanet = destPlanet;
+        this.busStops = busStops;
 
         // --- Controls (must be created before Player) ---
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -112,39 +70,9 @@ export default class MainScene extends Phaser.Scene {
         this.player = new Player(this, playerStartX, playerStartY, this.cursors);
         this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
         
-        // --- Aliens ---
-        this.aliens = this.physics.add.group();
-        const spawnAlien = (texture: string, speed: number) => {
-            let alienX, alienY;
-            const safeDistance = 400; // Minimum distance from the player
-            
-            do {
-                alienX = Phaser.Math.Between(0, WORLD_WIDTH);
-                alienY = Phaser.Math.Between(0, WORLD_HEIGHT);
-            } while (Phaser.Math.Distance.Between(playerStartX, playerStartY, alienX, alienY) < safeDistance);
-            
-            // The Alien class now accepts a texture key
-            const alien = new Alien(this, alienX, alienY, texture, this.player, speed);
-            this.aliens.add(alien);
-        };
-        
-        // Spawn multiple aliens of each type
-        const alienCounts = {
-            red: 4,
-            green: 6,
-            purple: 6
-        };
-
-        for (let i = 0; i < alienCounts.red; i++) {
-            spawnAlien('alien-red', ALIEN_SPEED_RED);
-        }
-        for (let i = 0; i < alienCounts.green; i++) {
-            spawnAlien('alien-green', ALIEN_SPEED_GREEN);
-        }
-        for (let i = 0; i < alienCounts.purple; i++) {
-            spawnAlien('alien-purple', ALIEN_SPEED_PURPLE);
-        }
-
+        // --- Aliens (Refactored) ---
+        this.enemyManager = new EnemyManager(this, this.player);
+        this.enemyManager.create();
 
         // --- Passenger ---
         this.passengers = this.physics.add.group();
@@ -155,8 +83,8 @@ export default class MainScene extends Phaser.Scene {
         
         // --- Collisions ---
         this.physics.add.overlap(this.player, this.passengers, this.handlePickupPassenger, undefined, this);
-        this.physics.add.collider(this.player, this.aliens, this.handleGameOver, undefined, this);
-        this.physics.add.collider(this.aliens, this.aliens); // Make aliens bounce off each other
+        this.physics.add.collider(this.player, this.enemyManager.aliens, this.handleGameOver, undefined, this);
+        this.physics.add.collider(this.enemyManager.aliens, this.enemyManager.aliens); // Make aliens bounce off each other
 
         // --- Minimap ---
         const minimapX = this.scale.width - MINIMAP_WIDTH - 10;
