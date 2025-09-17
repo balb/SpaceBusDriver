@@ -11,7 +11,8 @@ import {
     WORLD_HEIGHT,
     MINIMAP_WIDTH,
     MINIMAP_HEIGHT,
-    PASSENGER_RESPAWN_DELAY
+    PASSENGER_RESPAWN_DELAY,
+    FULL_BUS_BONUS
 } from '../constants';
 
 import Player from '../sprites/Player';
@@ -39,6 +40,7 @@ export default class MainScene extends Phaser.Scene {
     scale!: Phaser.Scale.ScaleManager;
     scene!: Phaser.Scenes.ScenePlugin;
     time!: Phaser.Time.Clock;
+    tweens!: Phaser.Tweens.TweenManager;
 
     constructor() {
         super({ key: 'main' });
@@ -197,10 +199,44 @@ export default class MainScene extends Phaser.Scene {
                 const numDroppedOff = this.player.dropOffAllPassengers();
                 this.score += numDroppedOff * 10;
 
+                // Check for a full bus bonus
+                if (numDroppedOff === this.player.passengerCapacity) {
+                    this.score += FULL_BUS_BONUS;
+                    this.showBonusText();
+                }
+
                 this.game.events.emit('updateScore', this.score);
                 this.game.events.emit('updatePassengerCount', this.player.passengerCount, this.player.passengerCapacity);
             }
         }
+    }
+
+    private showBonusText() {
+        const bonusText = this.add.text(
+            this.scale.width / 2,
+            this.scale.height / 2,
+            `FULL BUS BONUS! +${FULL_BUS_BONUS}`,
+            {
+                fontSize: '32px',
+                color: '#ffff00',
+                fontStyle: 'bold',
+                align: 'center',
+                stroke: '#000000',
+                strokeThickness: 4
+            }
+        ).setOrigin(0.5).setScrollFactor(0); // Sticks to the camera
+
+        // Add a tween to make it fade out and move up
+        this.tweens.add({
+            targets: bonusText,
+            alpha: 0,
+            y: bonusText.y - 50,
+            duration: 1500,
+            ease: 'Power1',
+            onComplete: () => {
+                bonusText.destroy();
+            }
+        });
     }
 
     handleGameOver() {

@@ -12,6 +12,7 @@ export const PLAYER_ROTATION_SPEED = 150; // in degrees/sec
 // Player Bus
 export const BUS_CAPACITY = 5;
 export const PASSENGER_RESPAWN_DELAY = 10000; // ms
+export const FULL_BUS_BONUS = 50;
 
 // Alien Speeds
 export const ALIEN_SPEED_RED = 220;    // Fastest

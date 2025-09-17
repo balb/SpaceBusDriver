@@ -48,6 +48,7 @@
     - It shows a scaled-down, real-time overview of the entire game world.
     - It displays markers for the player's bus, all aliens, all Bus Stop Planets, and the Terminus Planet.
 - Players earn **10 points** for each successfully delivered passenger.
+- Additionally, if the player drops off a full bus (5 passengers), they receive a **50-point bonus**.
 
 ## 4. Game State
 
