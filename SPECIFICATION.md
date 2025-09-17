@@ -16,8 +16,8 @@
 ### 2.2. The Passenger Loop
 1.  A passenger spawns at the "Home Planet".
 2.  The player must navigate the bus to the Home Planet to pick up the passenger. Overlapping with the passenger is sufficient.
-3.  Once a passenger is on board, the player must travel across the large map to the "Destination Planet".
-4.  The player drops off the passenger by getting close to the Destination Planet.
+3.  Once a passenger is on board, the player must travel across the large map to the **Terminus Planet**.
+4.  The player drops off the passenger by getting close to the **Terminus Planet**.
 5.  Upon successful drop-off, the player's score increases, and a new passenger immediately spawns back at the Home Planet, restarting the loop.
 
 ### 2.3. The Aliens
@@ -68,7 +68,7 @@ All visual assets are generated programmatically (procedurally) at runtime.
 - **Passenger:** A blue character with a circular head and a rectangular body.
 - **Planets:**
     - **Home Planet:** A medium-sized blue circle.
-    - **Destination Planet:** A medium-sized green circle.
+    - **Terminus Planet:** A medium-sized green circle with a flag sticking out of its top. The flag is white and reads "Terminus" in black text.
 
 ## 6. Technical Architecture
 

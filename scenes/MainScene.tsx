@@ -22,7 +22,7 @@ export default class MainScene extends Phaser.Scene {
     private aliens!: Phaser.Physics.Arcade.Group;
     private passengers!: Phaser.Physics.Arcade.Group;
     private homePlanet!: Phaser.GameObjects.Arc;
-    private destPlanet!: Phaser.GameObjects.Arc;
+    private destPlanet!: Phaser.GameObjects.Image;
     private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
     private stars!: Phaser.GameObjects.Group;
     
@@ -61,7 +61,14 @@ export default class MainScene extends Phaser.Scene {
 
         // --- Planets ---
         this.homePlanet = this.add.circle(200, 300, 60, 0x6464ff).setZ(-1);
-        this.destPlanet = this.add.circle(WORLD_WIDTH - 200, WORLD_HEIGHT - 300, 60, 0x64ff64).setZ(-1);
+        this.destPlanet = this.add.image(WORLD_WIDTH - 200, WORLD_HEIGHT - 300, 'planet-terminus').setZ(-1);
+        // The text's position is calculated relative to the image's center (origin) to align with the flag.
+        this.add.text(this.destPlanet.x + 44.5, this.destPlanet.y - 72.5, 'Terminus', {
+            fontSize: '16px',
+            color: '#000000',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+
 
         // --- Controls (must be created before Player) ---
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -150,12 +157,18 @@ export default class MainScene extends Phaser.Scene {
     update() {
         // --- Passenger Drop-off ---
         if (this.player.hasPassenger) {
+            const planetCenterX = this.destPlanet.x;
+            // The planet's center is offset vertically within the sprite texture
+            // because of the flagpole. The sprite's origin is its center.
+            const planetCenterY = this.destPlanet.y + 30;
+
             const distanceToDest = Phaser.Math.Distance.Between(
                 this.player.x, this.player.y,
-                this.destPlanet.x, this.destPlanet.y
+                planetCenterX, planetCenterY
             );
 
-            if (distanceToDest < this.destPlanet.radius + 16) { // 16 is ~half player width
+            // Using the planet's radius (60) for the collision check.
+            if (distanceToDest < 60 + 16) { // 16 is ~half player width
                 this.player.dropOffPassenger();
                 this.score += 10;
                 this.game.events.emit('updateScore', this.score);

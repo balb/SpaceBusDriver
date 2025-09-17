@@ -72,6 +72,15 @@ export default class BootScene extends Phaser.Scene {
         graphics.generateTexture('alien-purple', 24, 24);
         graphics.clear();
 
+        // --- Create Terminus Planet Texture ---
+        graphics.fillStyle(0x64ff64, 1); // Green planet
+        graphics.fillCircle(90, 120, 60); // Planet at bottom of a 180x180 texture
+        graphics.fillStyle(0xcccccc, 1); // Grey pole
+        graphics.fillRect(88, 0, 4, 60);  // Pole centered on planet
+        graphics.fillStyle(0xffffff, 1); // White flag
+        graphics.fillRect(92, 5, 85, 25); // Wider flag rectangle
+        graphics.generateTexture('planet-terminus', 180, 180);
+        graphics.clear();
 
         // --- Create Passenger Texture ---
         graphics.fillStyle(0x0000ff, 1); // Blue body
