@@ -10,7 +10,8 @@ import {
     WORLD_WIDTH,
     WORLD_HEIGHT,
     MINIMAP_WIDTH,
-    MINIMAP_HEIGHT
+    MINIMAP_HEIGHT,
+    PASSENGER_RESPAWN_DELAY
 } from '../constants';
 
 import Player from '../sprites/Player';
@@ -21,7 +22,7 @@ export default class MainScene extends Phaser.Scene {
     private player!: Player;
     private aliens!: Phaser.Physics.Arcade.Group;
     private passengers!: Phaser.Physics.Arcade.Group;
-    private homePlanet!: Phaser.GameObjects.Arc;
+    private busStops!: Phaser.Physics.Arcade.StaticGroup;
     private destPlanet!: Phaser.GameObjects.Image;
     private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
     private stars!: Phaser.GameObjects.Group;
@@ -37,6 +38,7 @@ export default class MainScene extends Phaser.Scene {
     physics!: Phaser.Physics.Arcade.ArcadePhysics;
     scale!: Phaser.Scale.ScaleManager;
     scene!: Phaser.Scenes.ScenePlugin;
+    time!: Phaser.Time.Clock;
 
     constructor() {
         super({ key: 'main' });
@@ -60,8 +62,7 @@ export default class MainScene extends Phaser.Scene {
         }
 
         // --- Planets ---
-        this.homePlanet = this.add.circle(200, 300, 60, 0x6464ff).setZ(-1);
-        this.destPlanet = this.add.image(WORLD_WIDTH - 200, WORLD_HEIGHT - 300, 'planet-terminus').setZ(-1);
+        this.destPlanet = this.add.image(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 'planet-terminus').setZ(-1);
         // The text's position is calculated relative to the image's center (origin) to align with the flag.
         this.add.text(this.destPlanet.x + 44.5, this.destPlanet.y - 72.5, 'Terminus', {
             fontSize: '16px',
@@ -69,13 +70,26 @@ export default class MainScene extends Phaser.Scene {
             fontStyle: 'bold'
         }).setOrigin(0.5);
 
+        this.busStops = this.physics.add.staticGroup();
+        const busStopPositions = [
+            { x: 300, y: 400 },
+            { x: WORLD_WIDTH - 300, y: 500 },
+            { x: 400, y: WORLD_HEIGHT - 400 },
+            { x: WORLD_WIDTH - 500, y: WORLD_HEIGHT - 600 },
+            { x: WORLD_WIDTH / 2, y: 300 },
+        ];
+        
+        busStopPositions.forEach(pos => {
+            this.busStops.create(pos.x, pos.y, 'planet-busstop').setCircle(60).setZ(-1);
+        });
+
 
         // --- Controls (must be created before Player) ---
         this.cursors = this.input.keyboard.createCursorKeys();
 
         // --- Player (Space Bus) ---
-        const playerStartX = this.homePlanet.x + 150;
-        const playerStartY = this.homePlanet.y;
+        const playerStartX = this.destPlanet.x - 200;
+        const playerStartY = this.destPlanet.y;
         this.player = new Player(this, playerStartX, playerStartY, this.cursors);
         this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
         
@@ -115,7 +129,10 @@ export default class MainScene extends Phaser.Scene {
 
         // --- Passenger ---
         this.passengers = this.physics.add.group();
-        this.spawnPassenger();
+        this.busStops.getChildren().forEach(stop => {
+            const busStop = stop as Phaser.Physics.Arcade.Sprite;
+            this.spawnPassenger(busStop.x, busStop.y);
+        });
         
         // --- Collisions ---
         this.physics.add.overlap(this.player, this.passengers, this.handlePickupPassenger, undefined, this);
@@ -135,28 +152,36 @@ export default class MainScene extends Phaser.Scene {
         // Launch the UI scene in parallel and emit initial state to the global bus
         this.scene.launch('ui');
         this.game.events.emit('updateScore', this.score);
-        this.game.events.emit('updatePassengerStatus', this.player.hasPassenger);
+        this.game.events.emit('updatePassengerCount', this.player.passengerCount, this.player.passengerCapacity);
     }
 
-    spawnPassenger() {
+    spawnPassenger(x: number, y: number) {
         // Create a new passenger sprite and add it to our group.
-        const passenger = this.passengers.create(this.homePlanet.x, this.homePlanet.y, 'passenger');
+        const passenger = this.passengers.create(x, y, 'passenger');
         passenger.setScale(2).setOrigin(0.5).refreshBody();
     }
 
     handlePickupPassenger(player: Phaser.Types.Physics.Arcade.GameObjectWithBody, passenger: Phaser.Types.Physics.Arcade.GameObjectWithBody) {
-        if (!this.player.hasPassenger) {
-            // The destroy() method exists on the base GameObject, so no cast is needed.
-            passenger.destroy();
+        // We cast player to the Player class to access custom properties/methods.
+        const playerSprite = player as Player;
+        // Attempt to pick up a passenger. The player method returns true if successful.
+        if (playerSprite.pickupPassenger()) {
+            const spawnX = passenger.body.x;
+            const spawnY = passenger.body.y;
             
-            this.player.pickupPassenger();
-            this.game.events.emit('updatePassengerStatus', this.player.hasPassenger);
+            passenger.destroy();
+            this.game.events.emit('updatePassengerCount', playerSprite.passengerCount, playerSprite.passengerCapacity);
+            
+            // Respawn a new passenger at the same spot after a delay
+            this.time.delayedCall(PASSENGER_RESPAWN_DELAY, () => {
+                this.spawnPassenger(spawnX, spawnY);
+            }, [], this);
         }
     }
 
     update() {
         // --- Passenger Drop-off ---
-        if (this.player.hasPassenger) {
+        if (this.player.passengerCount > 0) {
             const planetCenterX = this.destPlanet.x;
             // The planet's center is offset vertically within the sprite texture
             // because of the flagpole. The sprite's origin is its center.
@@ -169,11 +194,11 @@ export default class MainScene extends Phaser.Scene {
 
             // Using the planet's radius (60) for the collision check.
             if (distanceToDest < 60 + 16) { // 16 is ~half player width
-                this.player.dropOffPassenger();
-                this.score += 10;
+                const numDroppedOff = this.player.dropOffAllPassengers();
+                this.score += numDroppedOff * 10;
+
                 this.game.events.emit('updateScore', this.score);
-                this.game.events.emit('updatePassengerStatus', this.player.hasPassenger);
-                this.spawnPassenger();
+                this.game.events.emit('updatePassengerCount', this.player.passengerCount, this.player.passengerCapacity);
             }
         }
     }

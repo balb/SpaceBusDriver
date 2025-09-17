@@ -82,6 +82,12 @@ export default class BootScene extends Phaser.Scene {
         graphics.generateTexture('planet-terminus', 180, 180);
         graphics.clear();
 
+        // --- Create Bus Stop Planet Texture ---
+        graphics.fillStyle(0xffa500, 1); // Orange planet
+        graphics.fillCircle(60, 60, 60);
+        graphics.generateTexture('planet-busstop', 120, 120);
+        graphics.clear();
+
         // --- Create Passenger Texture ---
         graphics.fillStyle(0x0000ff, 1); // Blue body
         graphics.fillCircle(8, 5, 5); // Head

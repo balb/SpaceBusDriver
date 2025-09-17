@@ -3,11 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import * as Phaser from 'phaser';
-import { FORWARD_THRUST_SPEED, PLAYER_ROTATION_SPEED, REVERSE_ACCELERATION } from '../constants';
+import { FORWARD_THRUST_SPEED, PLAYER_ROTATION_SPEED, REVERSE_ACCELERATION, BUS_CAPACITY } from '../constants';
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
     private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
-    public hasPassenger = false;
+    public passengerCount = 0;
+    public readonly passengerCapacity = BUS_CAPACITY;
 
     constructor(scene: Phaser.Scene, x: number, y: number, cursors: Phaser.Types.Input.Keyboard.CursorKeys) {
         super(scene, x, y, 'bus');
@@ -56,11 +57,25 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         }
     }
     
-    public pickupPassenger() {
-        this.hasPassenger = true;
+    /**
+     * Attempts to add a passenger to the bus.
+     * @returns `true` if the passenger was picked up successfully, `false` if the bus was full.
+     */
+    public pickupPassenger(): boolean {
+        if (this.passengerCount < this.passengerCapacity) {
+            this.passengerCount++;
+            return true;
+        }
+        return false;
     }
     
-    public dropOffPassenger() {
-        this.hasPassenger = false;
+    /**
+     * Drops off all passengers.
+     * @returns The number of passengers that were on the bus.
+     */
+    public dropOffAllPassengers(): number {
+        const numDroppedOff = this.passengerCount;
+        this.passengerCount = 0;
+        return numDroppedOff;
     }
 }

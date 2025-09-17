@@ -9,6 +9,10 @@ export const FORWARD_THRUST_SPEED = 300;
 export const REVERSE_ACCELERATION = 150;
 export const PLAYER_ROTATION_SPEED = 150; // in degrees/sec
 
+// Player Bus
+export const BUS_CAPACITY = 5;
+export const PASSENGER_RESPAWN_DELAY = 10000; // ms
+
 // Alien Speeds
 export const ALIEN_SPEED_RED = 220;    // Fastest
 export const ALIEN_SPEED_GREEN = 180;  // Medium

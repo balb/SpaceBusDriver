@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-**Space Bus Driver** is a 2D top-down arcade game set in space. The player pilots a space bus across a large, scrollable map, picking up passengers from one planet and safely transporting them to another, all while being pursued by hostile aliens. The goal is to achieve the highest score possible.
+**Space Bus Driver** is a 2D top-down arcade game set in space. The player pilots a space bus across a large, scrollable map, picking up passengers from multiple "bus stop" planets and safely transporting them to the central Terminus, all while being pursued by hostile aliens. The goal is to achieve the highest score possible.
 
 ## 2. Core Gameplay Mechanics
 
@@ -14,11 +14,13 @@
 - The bus has physics-based movement, including acceleration and drag, making it feel like it's gliding through space.
 
 ### 2.2. The Passenger Loop
-1.  A passenger spawns at the "Home Planet".
-2.  The player must navigate the bus to the Home Planet to pick up the passenger. Overlapping with the passenger is sufficient.
-3.  Once a passenger is on board, the player must travel across the large map to the **Terminus Planet**.
-4.  The player drops off the passenger by getting close to the **Terminus Planet**.
-5.  Upon successful drop-off, the player's score increases, and a new passenger immediately spawns back at the Home Planet, restarting the loop.
+1.  Passengers spawn at multiple **Bus Stop Planets** scattered throughout the world.
+2.  The player can navigate to any bus stop to pick up a waiting passenger. Overlapping with the passenger is sufficient.
+3.  The bus has a maximum capacity of **5 passengers**. The player can continue picking up passengers from different bus stops until the bus is full.
+4.  Once a passenger is picked up, a new one will respawn at that same bus stop after a short delay.
+5.  The player must travel across the map to the central **Terminus Planet**.
+6.  Upon getting close to the Terminus Planet, all passengers currently on board are dropped off.
+7.  The player's score increases by 10 points for each passenger dropped off, and the bus's passenger count resets to zero, allowing the loop to begin again.
 
 ### 2.3. The Aliens
 - Multiple aliens act as the primary obstacles, each with a unique speed and appearance.
@@ -36,21 +38,21 @@
 - The game world is a large, rectangular area, equivalent to a 4x4 grid of screens (3200x2400 pixels).
 - The main camera smoothly follows the player's bus as it moves through the world.
 - The world has hard boundaries. The player bus and the aliens cannot pass through the edges of the world and will collide with them.
-- The Home and Destination planets are placed far apart to encourage exploration of the large map.
+- The Bus Stop and Terminus planets are placed far apart to encourage exploration of the large map.
 
 ## 3. Scoring & UI
 
 - The player's score is displayed in the top-left corner of the screen.
-- A status message below the score informs the player of their current objective: "Find passenger" or "Drop off passenger".
+- A status message below the score displays the number of passengers on board and the bus's capacity (e.g., "Passengers: 3/5").
 - A **minimap** is displayed in the top-right corner.
     - It shows a scaled-down, real-time overview of the entire game world.
-    - It displays markers for the player's bus, all aliens, the Home Planet, and the Destination Planet.
+    - It displays markers for the player's bus, all aliens, all Bus Stop Planets, and the Terminus Planet.
 - Players earn **10 points** for each successfully delivered passenger.
 
 ## 4. Game State
 
 - **Title Screen:** The game begins on a retro-styled title screen featuring vector graphics. The player presses the **Spacebar** to start the game.
-- **Gameplay Start:** The game begins with the player's bus near the Home Planet, a passenger at the Home Planet, and the aliens at random positions a safe distance away.
+- **Gameplay Start:** The game begins with the player's bus near the Terminus Planet, passengers at each Bus Stop Planet, and the aliens at random positions a safe distance away.
 - **Game Over:** Occurs when the player collides with any alien.
     - All game movement stops.
     - A "GAME OVER" message is displayed along with the final score.
@@ -67,7 +69,7 @@ All visual assets are generated programmatically (procedurally) at runtime.
     - **Purple Alien:** A purple circle with a single, sleepy-looking oval eye.
 - **Passenger:** A blue character with a circular head and a rectangular body.
 - **Planets:**
-    - **Home Planet:** A medium-sized blue circle.
+    - **Bus Stop Planet:** A medium-sized orange circle.
     - **Terminus Planet:** A medium-sized green circle with a flag sticking out of its top. The flag is white and reads "Terminus" in black text.
 
 ## 6. Technical Architecture
