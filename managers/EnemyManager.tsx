@@ -39,13 +39,13 @@ export default class EnemyManager {
         };
 
         for (let i = 0; i < alienCounts.red; i++) {
-            spawnAlien('alien-red', ALIEN_SPEED_RED);
+            spawnAlien('alien-red-1', ALIEN_SPEED_RED);
         }
         for (let i = 0; i < alienCounts.green; i++) {
-            spawnAlien('alien-green', ALIEN_SPEED_GREEN);
+            spawnAlien('alien-green-1', ALIEN_SPEED_GREEN);
         }
         for (let i = 0; i < alienCounts.purple; i++) {
-            spawnAlien('alien-purple', ALIEN_SPEED_PURPLE);
+            spawnAlien('alien-purple-1', ALIEN_SPEED_PURPLE);
         }
     }
 }

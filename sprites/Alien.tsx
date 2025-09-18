@@ -28,9 +28,15 @@ export default class Alien extends Phaser.Physics.Arcade.Sprite {
 
         // Configuration moved from MainScene
         this.setScale(2.5).setOrigin(0.5);
-        (this.body as Phaser.Physics.Arcade.Body).setCircle(10);
+        // Use a rectangular body that better fits the new sprite shapes.
+        (this.body as Phaser.Physics.Arcade.Body).setSize(24, 20);
         this.setCollideWorldBounds(true);
         this.setDepth(5);
+        
+        // Play the corresponding animation.
+        // e.g., textureKey 'alien-red-1' -> animKey 'anim-alien-red'
+        const baseName = textureKey.substring(0, textureKey.lastIndexOf('-'));
+        this.play(`anim-${baseName}`);
         
         this.startRoaming();
 

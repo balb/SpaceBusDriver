@@ -11,7 +11,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     public readonly passengerCapacity = BUS_CAPACITY;
 
     constructor(scene: Phaser.Scene, x: number, y: number, cursors: Phaser.Types.Input.Keyboard.CursorKeys) {
-        super(scene, x, y, 'bus');
+        super(scene, x, y, 'bus-idle');
 
         this.cursors = cursors;
 
@@ -21,7 +21,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         // Configuration moved from MainScene
         this.setOrigin(0.5).setScale(2);
-        (this.body as Phaser.Physics.Arcade.Body).setSize(26, 12);
+        // Adjust the physics body to match the new, more detailed sprite.
+        (this.body as Phaser.Physics.Arcade.Body).setSize(40, 14);
         this.setDamping(true);
         this.setDrag(0.95);
         this.setMaxVelocity(400);
@@ -49,11 +50,14 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         if (this.cursors.up.isDown) {
             this.scene.physics.velocityFromRotation(this.rotation, FORWARD_THRUST_SPEED, (this.body as Phaser.Physics.Arcade.Body).velocity);
             this.setAcceleration(0, 0);
+            this.setTexture('bus-thrust'); // Set thrust texture
         } else if (this.cursors.down.isDown) {
             // FIX: Replaced non-existent `accelerationFromRotation` with `velocityFromRotation`.
             this.scene.physics.velocityFromRotation(this.rotation, -REVERSE_ACCELERATION, (this.body as Phaser.Physics.Arcade.Body).acceleration);
+            this.setTexture('bus-idle'); // Revert to idle texture when reversing
         } else {
             this.setAcceleration(0, 0);
+            this.setTexture('bus-idle'); // Revert to idle texture when not moving
         }
     }
     

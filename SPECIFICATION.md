@@ -63,11 +63,13 @@
 
 All visual assets are generated programmatically (procedurally) at runtime.
 - **Background:** A dynamic starfield with two layers of stars to create a parallax scrolling effect, giving a sense of depth. The distant layer has smaller, dimmer stars that move slowly, while the closer layer has larger, brighter stars that move faster.
-- **Space Bus:** A yellow rectangular body with a light blue "cockpit" section.
-- **Aliens:**
-    - **Red Alien:** A red circle with a single, aggressive-looking triangular eye.
-    - **Green Alien:** A green circle with a smaller black circle for an eye, looking off to the side.
-    - **Purple Alien:** A purple circle with a single, sleepy-looking oval eye.
+- **Space Bus:** A detailed, retro-style yellow bus with shading and highlights. It has a grey engine nacelle on the left and a blue cockpit on the right. The bus has two visual states:
+    - **Idle:** The standard appearance.
+    - **Thrusting:** An engine flame appears from the nacelle when the player accelerates forward.
+- **Aliens:** Animated, multi-colored sprites in a classic 80s arcade style. Each alien has a two-frame animation, giving them a pulsing, lively appearance.
+    - **Red Alien (Fast):** A red, squid-like alien with two prominent white eyes.
+    - **Green Alien (Medium):** A green, crab-like alien with large legs and two white eyes.
+    - **Purple Alien (Slow):** A purple, jellyfish-like alien with dangling tentacles and two sleepy-looking white eyes.
 - **Passenger:** A blue character with a circular head and a rectangular body.
 - **Planets:**
     - **Bus Stop Planet:** A medium-sized orange circle.

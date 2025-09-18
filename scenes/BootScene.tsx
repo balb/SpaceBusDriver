@@ -11,6 +11,7 @@ export default class BootScene extends Phaser.Scene {
     load!: Phaser.Loader.LoaderPlugin;
     scene!: Phaser.Scenes.ScenePlugin;
     textures!: Phaser.Textures.TextureManager;
+    anims!: Phaser.Animations.AnimationManager;
 
     constructor() {
         super({ key: 'boot' });
@@ -46,49 +47,159 @@ export default class BootScene extends Phaser.Scene {
      */
     createProceduralAssets() {
         // Prevent re-creating textures if they already exist from a previous game instance
-        if (this.textures.exists('bus')) {
+        if (this.textures.exists('bus-idle')) {
             return;
         }
         
         const graphics = this.add.graphics();
 
-        // --- Create Bus Texture ---
-        graphics.fillStyle(0xffff00, 1); // Yellow body
-        graphics.fillRect(0, 0, 32, 16);
-        graphics.fillStyle(0xadd8e6, 1); // Light blue cockpit
-        graphics.fillRect(24, 4, 8, 8);
-        graphics.generateTexture('bus', 32, 16);
+        // --- Create Bus Textures (Idle and Thrusting) ---
+        const busWidth = 48;
+        const busHeight = 24;
+        const busBodyX = 12; // Start drawing the bus body a bit into the texture
+        const busBodyWidth = 32;
+        const busBodyHeight = 16;
+        
+        // Helper function to draw the common bus body with more detail and better colors.
+        const drawBusBody = () => {
+            const bodyY = (busHeight - busBodyHeight) / 2; // Center the bus body vertically (y=4)
+
+            // --- Engine Nacelle (left side) ---
+            // A lighter grey that is more visible on a black background.
+            graphics.fillStyle(0xb0b0b0, 1); // Medium-light grey
+            graphics.fillRect(busBodyX, bodyY, 4, busBodyHeight);
+            // Add a highlight and shadow to give it a rounded/metallic look.
+            graphics.fillStyle(0xdedede, 1); // Highlight
+            graphics.fillRect(busBodyX, bodyY, 2, busBodyHeight);
+            graphics.fillStyle(0x888888, 1); // Shadow
+            graphics.fillRect(busBodyX + 3, bodyY, 1, busBodyHeight);
+
+            // --- Main Bus Body ---
+            const mainBodyX = busBodyX + 4;
+            const mainBodyWidth = busBodyWidth - 4;
+            // Base color - a richer gold/yellow.
+            graphics.fillStyle(0xffd700, 1);
+            graphics.fillRect(mainBodyX, bodyY, mainBodyWidth, busBodyHeight);
+            
+            // Add highlights and shadows for dimension.
+            graphics.fillStyle(0xfff8a8, 1); // Lighter yellow highlight on top.
+            graphics.fillRect(mainBodyX, bodyY, mainBodyWidth, 4);
+            graphics.fillStyle(0xcca300, 1); // Darker yellow shadow on bottom.
+            graphics.fillRect(mainBodyX, bodyY + busBodyHeight - 4, mainBodyWidth, 4);
+
+            // --- Stripe ---
+            // A dark grey stripe, less harsh than pure black.
+            graphics.fillStyle(0x444444, 1); 
+            graphics.fillRect(mainBodyX, bodyY + 6, mainBodyWidth - 8, 4);
+
+            // --- Cockpit ---
+            const cockpitX = mainBodyX + mainBodyWidth - 8;
+            // A slightly richer blue.
+            graphics.fillStyle(0x87ceeb, 1);
+            graphics.fillRect(cockpitX, bodyY + 4, 8, 8);
+            // Add a 'glare' highlight.
+            graphics.fillStyle(0xc0e8fa, 1);
+            graphics.fillRect(cockpitX + 1, bodyY + 5, 3, 2);
+        };
+
+        // Create 'bus-idle' texture
+        drawBusBody();
+        graphics.generateTexture('bus-idle', busWidth, busHeight);
+        graphics.clear();
+        
+        // Create 'bus-thrust' texture
+        drawBusBody();
+        // Add flames
+        graphics.fillStyle(0xff0000, 1); // Red part of flame
+        graphics.fillTriangle(0, busHeight / 2, busBodyX, 6, busBodyX, busHeight - 6);
+        graphics.fillStyle(0xffa500, 1); // Orange part of flame
+        graphics.fillTriangle(4, busHeight / 2, busBodyX, 9, busBodyX, busHeight - 9);
+        graphics.fillStyle(0xffffff, 1); // White part of flame
+        graphics.fillTriangle(8, busHeight / 2, busBodyX, 11, busBodyX, busHeight - 11);
+        graphics.generateTexture('bus-thrust', busWidth, busHeight);
         graphics.clear();
 
-        // --- Create Alien Textures ---
-        // Red Alien (Fast)
-        graphics.fillStyle(0xff4136, 1); // Red body
-        graphics.fillCircle(12, 12, 12);
-        graphics.fillStyle(0x000000, 1); // Black angry eye
-        graphics.beginPath();
-        graphics.moveTo(13, 7);
-        graphics.lineTo(19, 10);
-        graphics.lineTo(13, 13);
-        graphics.closePath();
-        graphics.fillPath();
-        graphics.generateTexture('alien-red', 24, 24);
-        graphics.clear();
+        // --- Create Alien Textures (Animated 80s Arcade Style) ---
+        const blockSize = 4; // Each "pixel" of the alien is a 4x4 square
+        const textureSize = 24; // 6x6 grid of blocks
 
-        // Green Alien (Medium)
-        graphics.fillStyle(0x2ecc40, 1); // Green body
-        graphics.fillCircle(12, 12, 12);
-        graphics.fillStyle(0x000000, 1); // Black eye
-        graphics.fillCircle(16, 8, 4);
-        graphics.generateTexture('alien-green', 24, 24);
-        graphics.clear();
+        // Helper to draw a pattern of blocks with multiple colors.
+        const drawAlienFromPattern = (key: string, colorMap: {[char: string]: number}, pattern: string[]) => {
+            const pixelsByColor: { [color: number]: { x: number, y: number }[] } = {};
 
-        // Purple Alien (Slow)
-        graphics.fillStyle(0xb10dc9, 1); // Purple body
-        graphics.fillCircle(12, 12, 12);
-        graphics.fillStyle(0x000000, 1); // Black sleepy eye
-        graphics.fillEllipse(17, 9, 8, 4);
-        graphics.generateTexture('alien-purple', 24, 24);
-        graphics.clear();
+            // Group pixels by color to minimize fillStyle changes
+            for (let r = 0; r < pattern.length; r++) {
+                for (let c = 0; c < pattern[r].length; c++) {
+                    const char = pattern[r][c];
+                    const color = colorMap[char];
+                    if (color !== undefined) {
+                        if (!pixelsByColor[color]) {
+                            pixelsByColor[color] = [];
+                        }
+                        pixelsByColor[color].push({ x: c * blockSize, y: r * blockSize });
+                    }
+                }
+            }
+
+            // Draw all pixels for each color
+            for (const colorHex in pixelsByColor) {
+                graphics.fillStyle(Number(colorHex), 1);
+                const pixels = pixelsByColor[colorHex];
+                for (const pixel of pixels) {
+                    graphics.fillRect(pixel.x, pixel.y, blockSize, blockSize);
+                }
+            }
+
+            graphics.generateTexture(key, textureSize, textureSize);
+            graphics.clear();
+        };
+        
+        // Red Alien (Fast - "Squid" style)
+        const redColors = { 'X': 0xff4136, 'S': 0xc2342b, 'E': 0x000000, 'W': 0xffffff };
+        drawAlienFromPattern('alien-red-1', redColors, [
+            '..XX..', '.XSSX.', 'XWEWXX', 'XSSSSS', 'X.XX.X', '.X..X.',
+        ]);
+        drawAlienFromPattern('alien-red-2', redColors, [
+            '..XX..', '.XSSX.', 'XWEWXX', 'XSSSSS', '.X.XX.', 'X..X.X',
+        ]);
+
+        // Green Alien (Medium - "Crab" style)
+        const greenColors = { 'X': 0x2ecc40, 'S': 0x24a334, 'E': 0x000000, 'W': 0xffffff };
+        drawAlienFromPattern('alien-green-1', greenColors, [
+            'X....X', '.X..X.', '.XSSX.', 'XWEWXX', 'XSSSSS', 'X.XX.X',
+        ]);
+        drawAlienFromPattern('alien-green-2', greenColors, [
+            '.X..X.', 'X.XX.X', '.XSSX.', 'XWEWXX', 'XSSSSS', '.X..X.',
+        ]);
+
+        // Purple Alien (Slow - "Jellyfish" style)
+        const purpleColors = { 'X': 0xb10dc9, 'S': 0xc949e3, 'E': 0x000000, 'W': 0xffffff };
+        drawAlienFromPattern('alien-purple-1', purpleColors, [
+            '..SS..', '.XXXX.', 'XWEEWX', 'XXXXXX', '.X..X.', 'X....X',
+        ]);
+        drawAlienFromPattern('alien-purple-2', purpleColors, [
+            '......', '..SS..', '.XXXX.', 'XWEEWX', 'XXXXXX', '.X..X.',
+        ]);
+        
+        // --- Create Alien Animations ---
+        this.anims.create({
+            key: 'anim-alien-red',
+            frames: [{ key: 'alien-red-1' }, { key: 'alien-red-2' }],
+            frameRate: 4,
+            repeat: -1
+        });
+        this.anims.create({
+            key: 'anim-alien-green',
+            frames: [{ key: 'alien-green-1' }, { key: 'alien-green-2' }],
+            frameRate: 4,
+            repeat: -1
+        });
+        this.anims.create({
+            key: 'anim-alien-purple',
+            frames: [{ key: 'alien-purple-1' }, { key: 'alien-purple-2' }],
+            frameRate: 5,
+            repeat: -1
+        });
 
         // --- Create Terminus Planet Texture ---
         graphics.fillStyle(0x64ff64, 1); // Green planet
