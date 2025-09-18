@@ -159,6 +159,7 @@ export default class MainScene extends Phaser.Scene {
             // Using the planet's radius (60) for the collision check.
             if (distanceToDest < 60 + 16) { // 16 is ~half player width
                 const numDroppedOff = this.player.dropOffAllPassengers();
+                
                 this.score += numDroppedOff * 10;
 
                 // Check for a full bus bonus
