@@ -29,3 +29,42 @@ export const WORLD_WIDTH = 800 * 4;
 export const WORLD_HEIGHT = 600 * 4;
 export const MINIMAP_WIDTH = 200;
 export const MINIMAP_HEIGHT = 150;
+
+// --- Asset & Event Keys ---
+
+export const SCENES = {
+    BOOT: 'boot',
+    TITLE: 'title',
+    MAIN: 'main',
+    UI: 'ui'
+};
+
+export const TEXTURES = {
+    BUS_IDLE: 'bus-idle',
+    BUS_THRUST: 'bus-thrust',
+    PASSENGER: 'passenger',
+    PLANET_TERMINUS: 'planet-terminus',
+    PLANET_BUSSTOP: 'planet-busstop',
+    ALIEN_RED_1: 'alien-red-1',
+    ALIEN_RED_2: 'alien-red-2',
+    ALIEN_GREEN_1: 'alien-green-1',
+    ALIEN_GREEN_2: 'alien-green-2',
+    ALIEN_PURPLE_1: 'alien-purple-1',
+    ALIEN_PURPLE_2: 'alien-purple-2',
+};
+
+export const ANIMATIONS = {
+    ALIEN_RED: 'anim-alien-red',
+    ALIEN_GREEN: 'anim-alien-green',
+    ALIEN_PURPLE: 'anim-alien-purple',
+};
+
+export const AUDIO = {
+    TITLE_MUSIC: 'music-title',
+    MAIN_MUSIC: 'music-main',
+};
+
+export const EVENTS = {
+    UPDATE_SCORE: 'updateScore',
+    UPDATE_PASSENGER_COUNT: 'updatePassengerCount'
+};

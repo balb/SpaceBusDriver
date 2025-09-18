@@ -16,7 +16,7 @@ export default class Alien extends Phaser.Physics.Arcade.Sprite {
     protected aiState: 'roaming' | 'chasing' = 'roaming';
     protected roamTimer?: Phaser.Time.TimerEvent;
 
-    constructor(scene: Phaser.Scene, x: number, y: number, textureKey: string, target: Phaser.Physics.Arcade.Sprite, speed: number) {
+    constructor(scene: Phaser.Scene, x: number, y: number, textureKey: string, animKey: string, target: Phaser.Physics.Arcade.Sprite, speed: number) {
         super(scene, x, y, textureKey);
 
         this.target = target;
@@ -34,9 +34,7 @@ export default class Alien extends Phaser.Physics.Arcade.Sprite {
         this.setDepth(5);
         
         // Play the corresponding animation.
-        // e.g., textureKey 'alien-red-1' -> animKey 'anim-alien-red'
-        const baseName = textureKey.substring(0, textureKey.lastIndexOf('-'));
-        this.play(`anim-${baseName}`);
+        this.play(animKey);
         
         this.startRoaming();
 

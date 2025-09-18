@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import * as Phaser from 'phaser';
-import { MINIMAP_WIDTH, MINIMAP_HEIGHT } from '../constants';
+import { MINIMAP_WIDTH, MINIMAP_HEIGHT, SCENES, EVENTS } from '../constants';
 
 // --- UI Scene (Overlay) ---
 export default class UIScene extends Phaser.Scene {
@@ -17,7 +17,7 @@ export default class UIScene extends Phaser.Scene {
     game!: Phaser.Game;
 
     constructor() {
-        super({ key: 'ui' });
+        super({ key: SCENES.UI });
     }
 
     create() {
@@ -33,13 +33,13 @@ export default class UIScene extends Phaser.Scene {
             .setStrokeStyle(2, 0xffffff, 0.8);
 
         // ARCHITECTURAL FIX: Listen on the global game event bus to decouple from MainScene.
-        this.game.events.on('updateScore', this.updateScore, this);
-        this.game.events.on('updatePassengerCount', this.updatePassengerCount, this);
+        this.game.events.on(EVENTS.UPDATE_SCORE, this.updateScore, this);
+        this.game.events.on(EVENTS.UPDATE_PASSENGER_COUNT, this.updatePassengerCount, this);
 
         // IMPORTANT: Clean up listeners when this scene is shut down to prevent memory leaks.
         this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
-            this.game.events.off('updateScore', this.updateScore, this);
-            this.game.events.off('updatePassengerCount', this.updatePassengerCount, this);
+            this.game.events.off(EVENTS.UPDATE_SCORE, this.updateScore, this);
+            this.game.events.off(EVENTS.UPDATE_PASSENGER_COUNT, this.updatePassengerCount, this);
         });
     }
 

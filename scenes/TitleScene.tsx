@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import * as Phaser from 'phaser';
+import { SCENES, AUDIO } from '../constants';
 
 // --- Title Scene (Atari-style) ---
 export default class TitleScene extends Phaser.Scene {
@@ -18,7 +19,7 @@ export default class TitleScene extends Phaser.Scene {
     cache!: Phaser.Cache.CacheManager;
 
     constructor() {
-        super({ key: 'title' });
+        super({ key: SCENES.TITLE });
     }
 
     create() {
@@ -92,7 +93,7 @@ export default class TitleScene extends Phaser.Scene {
         
         // Listen for the spacebar to start the game
         this.input.keyboard.once('keydown-SPACE', () => {
-            this.scene.start('main');
+            this.scene.start(SCENES.MAIN);
         });
     }
 
@@ -100,14 +101,14 @@ export default class TitleScene extends Phaser.Scene {
         // Stop any other music that might be playing (e.g., from a game over)
         this.sound.stopAll();
 
-        if (this.cache.audio.has('music-title')) {
+        if (this.cache.audio.has(AUDIO.TITLE_MUSIC)) {
             // Check isPlaying to prevent restarting the track if it's already running
-            if (!this.sound.get('music-title')?.isPlaying) {
-                this.sound.play('music-title', { loop: true, volume: 0.7 });
+            if (!this.sound.get(AUDIO.TITLE_MUSIC)?.isPlaying) {
+                this.sound.play(AUDIO.TITLE_MUSIC, { loop: true, volume: 0.7 });
             }
         } else {
             // This is a fallback warning. The error handler in BootScene should provide a more specific message.
-            console.warn("Audio key 'music-title' not found. Music will not play. Check BootScene for loading errors.");
+            console.warn(`Audio key '${AUDIO.TITLE_MUSIC}' not found. Music will not play. Check BootScene for loading errors.`);
         }
     }
 

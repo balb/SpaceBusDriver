@@ -5,7 +5,7 @@
 import * as Phaser from 'phaser';
 import Alien from '../sprites/Alien';
 import Player from '../sprites/Player';
-import { ALIEN_SPEED_RED, ALIEN_SPEED_GREEN, ALIEN_SPEED_PURPLE, WORLD_WIDTH, WORLD_HEIGHT } from '../constants';
+import { ALIEN_SPEED_RED, ALIEN_SPEED_GREEN, ALIEN_SPEED_PURPLE, WORLD_WIDTH, WORLD_HEIGHT, TEXTURES, ANIMATIONS } from '../constants';
 
 export default class EnemyManager {
     private scene: Phaser.Scene;
@@ -19,7 +19,7 @@ export default class EnemyManager {
     }
 
     public create() {
-        const spawnAlien = (texture: string, speed: number) => {
+        const spawnAlien = (texture: string, animKey: string, speed: number) => {
             let alienX, alienY;
             const safeDistance = 400; // Minimum distance from the player
             
@@ -28,7 +28,7 @@ export default class EnemyManager {
                 alienY = Phaser.Math.Between(0, WORLD_HEIGHT);
             } while (Phaser.Math.Distance.Between(this.player.x, this.player.y, alienX, alienY) < safeDistance);
             
-            const alien = new Alien(this.scene, alienX, alienY, texture, this.player, speed);
+            const alien = new Alien(this.scene, alienX, alienY, texture, animKey, this.player, speed);
             this.aliens.add(alien);
         };
         
@@ -39,13 +39,13 @@ export default class EnemyManager {
         };
 
         for (let i = 0; i < alienCounts.red; i++) {
-            spawnAlien('alien-red-1', ALIEN_SPEED_RED);
+            spawnAlien(TEXTURES.ALIEN_RED_1, ANIMATIONS.ALIEN_RED, ALIEN_SPEED_RED);
         }
         for (let i = 0; i < alienCounts.green; i++) {
-            spawnAlien('alien-green-1', ALIEN_SPEED_GREEN);
+            spawnAlien(TEXTURES.ALIEN_GREEN_1, ANIMATIONS.ALIEN_GREEN, ALIEN_SPEED_GREEN);
         }
         for (let i = 0; i < alienCounts.purple; i++) {
-            spawnAlien('alien-purple-1', ALIEN_SPEED_PURPLE);
+            spawnAlien(TEXTURES.ALIEN_PURPLE_1, ANIMATIONS.ALIEN_PURPLE, ALIEN_SPEED_PURPLE);
         }
     }
 }

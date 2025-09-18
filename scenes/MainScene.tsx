@@ -9,7 +9,11 @@ import {
     MINIMAP_WIDTH,
     MINIMAP_HEIGHT,
     PASSENGER_RESPAWN_DELAY,
-    FULL_BUS_BONUS
+    FULL_BUS_BONUS,
+    SCENES,
+    AUDIO,
+    EVENTS,
+    TEXTURES
 } from '../constants';
 
 import Player from '../sprites/Player';
@@ -46,7 +50,7 @@ export default class MainScene extends Phaser.Scene {
     cache!: Phaser.Cache.CacheManager;
 
     constructor() {
-        super({ key: 'main' });
+        super({ key: SCENES.MAIN });
     }
 
     create() {
@@ -105,23 +109,23 @@ export default class MainScene extends Phaser.Scene {
         minimap.ignore(this.starsNear);
 
         // Launch the UI scene in parallel and emit initial state to the global bus
-        this.scene.launch('ui');
-        this.game.events.emit('updateScore', this.score);
-        this.game.events.emit('updatePassengerCount', this.player.passengerCount, this.player.passengerCapacity);
+        this.scene.launch(SCENES.UI);
+        this.game.events.emit(EVENTS.UPDATE_SCORE, this.score);
+        this.game.events.emit(EVENTS.UPDATE_PASSENGER_COUNT, this.player.passengerCount, this.player.passengerCapacity);
     }
 
     private playMainMusic() {
         this.sound.stopAll();
-        if (this.cache.audio.has('music-main')) {
-            this.sound.play('music-main', { loop: true, volume: 0.7 });
+        if (this.cache.audio.has(AUDIO.MAIN_MUSIC)) {
+            this.sound.play(AUDIO.MAIN_MUSIC, { loop: true, volume: 0.7 });
         } else {
-            console.warn("Audio key 'music-main' not found. Music will not play. Check BootScene for loading errors.");
+            console.warn(`Audio key '${AUDIO.MAIN_MUSIC}' not found. Music will not play. Check BootScene for loading errors.`);
         }
     }
 
     spawnPassenger(x: number, y: number) {
         // Create a new passenger sprite and add it to our group.
-        const passenger = this.passengers.create(x, y, 'passenger');
+        const passenger = this.passengers.create(x, y, TEXTURES.PASSENGER);
         passenger.setScale(2).setOrigin(0.5).refreshBody();
     }
 
@@ -134,7 +138,7 @@ export default class MainScene extends Phaser.Scene {
             const spawnY = passenger.body.y;
             
             passenger.destroy();
-            this.game.events.emit('updatePassengerCount', playerSprite.passengerCount, playerSprite.passengerCapacity);
+            this.game.events.emit(EVENTS.UPDATE_PASSENGER_COUNT, playerSprite.passengerCount, playerSprite.passengerCapacity);
             
             // Respawn a new passenger at the same spot after a delay
             this.time.delayedCall(PASSENGER_RESPAWN_DELAY, () => {
@@ -168,8 +172,8 @@ export default class MainScene extends Phaser.Scene {
                     this.showBonusText();
                 }
 
-                this.game.events.emit('updateScore', this.score);
-                this.game.events.emit('updatePassengerCount', this.player.passengerCount, this.player.passengerCapacity);
+                this.game.events.emit(EVENTS.UPDATE_SCORE, this.score);
+                this.game.events.emit(EVENTS.UPDATE_PASSENGER_COUNT, this.player.passengerCount, this.player.passengerCapacity);
             }
         }
     }
@@ -205,10 +209,10 @@ export default class MainScene extends Phaser.Scene {
     handleGameOver() {
         // --- Play Game Over Music ---
         this.sound.stopAll();
-        if (this.cache.audio.has('music-title')) {
-            this.sound.play('music-title', { loop: true, volume: 0.7 });
+        if (this.cache.audio.has(AUDIO.TITLE_MUSIC)) {
+            this.sound.play(AUDIO.TITLE_MUSIC, { loop: true, volume: 0.7 });
         } else {
-            console.warn("Audio key 'music-title' not found. Music will not play. Check BootScene for loading errors.");
+            console.warn(`Audio key '${AUDIO.TITLE_MUSIC}' not found. Music will not play. Check BootScene for loading errors.`);
         }
 
         // Stop all physics and animations
@@ -241,8 +245,8 @@ export default class MainScene extends Phaser.Scene {
         // Listen for the spacebar to return to the title screen
         this.input.keyboard.once('keydown-SPACE', () => {
             // Stop the UI scene before restarting
-            this.scene.stop('ui');
-            this.scene.start('title');
+            this.scene.stop(SCENES.UI);
+            this.scene.start(SCENES.TITLE);
         });
     }
 }

@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import * as Phaser from 'phaser';
+import { SCENES, AUDIO, TEXTURES, ANIMATIONS } from '../constants';
 
 // --- Boot Scene (for generating assets) ---
 export default class BootScene extends Phaser.Scene {
@@ -14,7 +15,7 @@ export default class BootScene extends Phaser.Scene {
     anims!: Phaser.Animations.AnimationManager;
 
     constructor() {
-        super({ key: 'boot' });
+        super({ key: SCENES.BOOT });
     }
 
     preload() {
@@ -31,14 +32,14 @@ export default class BootScene extends Phaser.Scene {
         });
         
         // Load music using paths relative to the new base URL.
-        this.load.audio('music-title', 'audio/galactic-pulse.mp3');
-        this.load.audio('music-main', 'audio/galactic-rush.mp3');
+        this.load.audio(AUDIO.TITLE_MUSIC, 'audio/galactic-pulse.mp3');
+        this.load.audio(AUDIO.MAIN_MUSIC, 'audio/galactic-rush.mp3');
     }
 
     create() {
         this.createProceduralAssets();
         // Start the title scene.
-        this.scene.start('title');
+        this.scene.start(SCENES.TITLE);
     }
 
     /**
@@ -47,7 +48,7 @@ export default class BootScene extends Phaser.Scene {
      */
     createProceduralAssets() {
         // Prevent re-creating textures if they already exist from a previous game instance
-        if (this.textures.exists('bus-idle')) {
+        if (this.textures.exists(TEXTURES.BUS_IDLE)) {
             return;
         }
         
@@ -104,7 +105,7 @@ export default class BootScene extends Phaser.Scene {
 
         // Create 'bus-idle' texture
         drawBusBody();
-        graphics.generateTexture('bus-idle', busWidth, busHeight);
+        graphics.generateTexture(TEXTURES.BUS_IDLE, busWidth, busHeight);
         graphics.clear();
         
         // Create 'bus-thrust' texture
@@ -116,7 +117,7 @@ export default class BootScene extends Phaser.Scene {
         graphics.fillTriangle(4, busHeight / 2, busBodyX, 9, busBodyX, busHeight - 9);
         graphics.fillStyle(0xffffff, 1); // White part of flame
         graphics.fillTriangle(8, busHeight / 2, busBodyX, 11, busBodyX, busHeight - 11);
-        graphics.generateTexture('bus-thrust', busWidth, busHeight);
+        graphics.generateTexture(TEXTURES.BUS_THRUST, busWidth, busHeight);
         graphics.clear();
 
         // --- Create Alien Textures (Animated 80s Arcade Style) ---
@@ -156,47 +157,47 @@ export default class BootScene extends Phaser.Scene {
         
         // Red Alien (Fast - "Squid" style)
         const redColors = { 'X': 0xff4136, 'S': 0xc2342b, 'E': 0x000000, 'W': 0xffffff };
-        drawAlienFromPattern('alien-red-1', redColors, [
+        drawAlienFromPattern(TEXTURES.ALIEN_RED_1, redColors, [
             '..XX..', '.XSSX.', 'XWEWXX', 'XSSSSS', 'X.XX.X', '.X..X.',
         ]);
-        drawAlienFromPattern('alien-red-2', redColors, [
+        drawAlienFromPattern(TEXTURES.ALIEN_RED_2, redColors, [
             '..XX..', '.XSSX.', 'XWEWXX', 'XSSSSS', '.X.XX.', 'X..X.X',
         ]);
 
         // Green Alien (Medium - "Crab" style)
         const greenColors = { 'X': 0x2ecc40, 'S': 0x24a334, 'E': 0x000000, 'W': 0xffffff };
-        drawAlienFromPattern('alien-green-1', greenColors, [
+        drawAlienFromPattern(TEXTURES.ALIEN_GREEN_1, greenColors, [
             'X....X', '.X..X.', '.XSSX.', 'XWEWXX', 'XSSSSS', 'X.XX.X',
         ]);
-        drawAlienFromPattern('alien-green-2', greenColors, [
+        drawAlienFromPattern(TEXTURES.ALIEN_GREEN_2, greenColors, [
             '.X..X.', 'X.XX.X', '.XSSX.', 'XWEWXX', 'XSSSSS', '.X..X.',
         ]);
 
         // Purple Alien (Slow - "Jellyfish" style)
         const purpleColors = { 'X': 0xb10dc9, 'S': 0xc949e3, 'E': 0x000000, 'W': 0xffffff };
-        drawAlienFromPattern('alien-purple-1', purpleColors, [
+        drawAlienFromPattern(TEXTURES.ALIEN_PURPLE_1, purpleColors, [
             '..SS..', '.XXXX.', 'XWEEWX', 'XXXXXX', '.X..X.', 'X....X',
         ]);
-        drawAlienFromPattern('alien-purple-2', purpleColors, [
+        drawAlienFromPattern(TEXTURES.ALIEN_PURPLE_2, purpleColors, [
             '......', '..SS..', '.XXXX.', 'XWEEWX', 'XXXXXX', '.X..X.',
         ]);
         
         // --- Create Alien Animations ---
         this.anims.create({
-            key: 'anim-alien-red',
-            frames: [{ key: 'alien-red-1' }, { key: 'alien-red-2' }],
+            key: ANIMATIONS.ALIEN_RED,
+            frames: [{ key: TEXTURES.ALIEN_RED_1 }, { key: TEXTURES.ALIEN_RED_2 }],
             frameRate: 4,
             repeat: -1
         });
         this.anims.create({
-            key: 'anim-alien-green',
-            frames: [{ key: 'alien-green-1' }, { key: 'alien-green-2' }],
+            key: ANIMATIONS.ALIEN_GREEN,
+            frames: [{ key: TEXTURES.ALIEN_GREEN_1 }, { key: TEXTURES.ALIEN_GREEN_2 }],
             frameRate: 4,
             repeat: -1
         });
         this.anims.create({
-            key: 'anim-alien-purple',
-            frames: [{ key: 'alien-purple-1' }, { key: 'alien-purple-2' }],
+            key: ANIMATIONS.ALIEN_PURPLE,
+            frames: [{ key: TEXTURES.ALIEN_PURPLE_1 }, { key: TEXTURES.ALIEN_PURPLE_2 }],
             frameRate: 5,
             repeat: -1
         });
@@ -208,20 +209,20 @@ export default class BootScene extends Phaser.Scene {
         graphics.fillRect(88, 0, 4, 60);  // Pole centered on planet
         graphics.fillStyle(0xffffff, 1); // White flag
         graphics.fillRect(92, 5, 85, 25); // Wider flag rectangle
-        graphics.generateTexture('planet-terminus', 180, 180);
+        graphics.generateTexture(TEXTURES.PLANET_TERMINUS, 180, 180);
         graphics.clear();
 
         // --- Create Bus Stop Planet Texture ---
         graphics.fillStyle(0xffa500, 1); // Orange planet
         graphics.fillCircle(60, 60, 60);
-        graphics.generateTexture('planet-busstop', 120, 120);
+        graphics.generateTexture(TEXTURES.PLANET_BUSSTOP, 120, 120);
         graphics.clear();
 
         // --- Create Passenger Texture ---
         graphics.fillStyle(0x0000ff, 1); // Blue body
         graphics.fillCircle(8, 5, 5); // Head
         graphics.fillRect(4, 10, 8, 10); // Body
-        graphics.generateTexture('passenger', 16, 20);
+        graphics.generateTexture(TEXTURES.PASSENGER, 16, 20);
         graphics.clear();
         
         graphics.destroy();

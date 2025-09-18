@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import * as Phaser from 'phaser';
-import { WORLD_WIDTH, WORLD_HEIGHT } from '../constants';
+import { WORLD_WIDTH, WORLD_HEIGHT, TEXTURES } from '../constants';
 
 export default class WorldBuilder {
     public static createStarfield(scene: Phaser.Scene): { starsFar: Phaser.GameObjects.Group, starsNear: Phaser.GameObjects.Group } {
@@ -36,7 +36,7 @@ export default class WorldBuilder {
     }
 
     public static createPlanets(scene: Phaser.Scene): { destPlanet: Phaser.GameObjects.Image, busStops: Phaser.Physics.Arcade.StaticGroup } {
-        const destPlanet = scene.add.image(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 'planet-terminus').setDepth(-1);
+        const destPlanet = scene.add.image(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, TEXTURES.PLANET_TERMINUS).setDepth(-1);
         // The text's position is calculated relative to the image's center (origin) to align with the flag.
         scene.add.text(destPlanet.x + 44.5, destPlanet.y - 72.5, 'Terminus', {
             fontSize: '16px',
@@ -54,7 +54,7 @@ export default class WorldBuilder {
         ];
         
         busStopPositions.forEach(pos => {
-            busStops.create(pos.x, pos.y, 'planet-busstop').setCircle(60).setDepth(-1);
+            busStops.create(pos.x, pos.y, TEXTURES.PLANET_BUSSTOP).setCircle(60).setDepth(-1);
         });
 
         return { destPlanet, busStops };
