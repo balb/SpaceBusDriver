@@ -17,6 +17,10 @@ export default class BootScene extends Phaser.Scene {
     }
 
     preload() {
+        // Set the base URL for all subsequent asset loads. This is the "proper"
+        // Phaser way to manage asset paths, making them easier to maintain.
+        this.load.setBaseURL('https://cdn.jsdelivr.net/gh/balb/SpaceBusDriver@main/assets/');
+
         // FIX: Add a listener to catch file loading errors, especially for audio.
         // This provides clear feedback in the console if MP3 files are missing.
         this.load.on('loaderror', (file: Phaser.Loader.File) => {
@@ -25,9 +29,9 @@ export default class BootScene extends Phaser.Scene {
             }
         });
         
-        // REVERT: Load music from local asset files.
-        this.load.audio('music-title', 'assets/music-title.mp3');
-        this.load.audio('music-main', 'assets/music-main.mp3');
+        // Load music using paths relative to the new base URL.
+        this.load.audio('music-title', 'audio/galactic-pulse.mp3');
+        this.load.audio('music-main', 'audio/galactic-rush.mp3');
     }
 
     create() {
