@@ -16,6 +16,20 @@ export default class BootScene extends Phaser.Scene {
         super({ key: 'boot' });
     }
 
+    preload() {
+        // FIX: Add a listener to catch file loading errors, especially for audio.
+        // This provides clear feedback in the console if MP3 files are missing.
+        this.load.on('loaderror', (file: Phaser.Loader.File) => {
+            if (file.type === 'audio') {
+                console.error(`Error loading audio: ${file.key}. URL: ${file.url}. Check that the file exists and the path is correct in your project structure.`);
+            }
+        });
+        
+        // REVERT: Load music from local asset files.
+        this.load.audio('music-title', 'assets/music-title.mp3');
+        this.load.audio('music-main', 'assets/music-main.mp3');
+    }
+
     create() {
         this.createProceduralAssets();
         // Start the title scene.

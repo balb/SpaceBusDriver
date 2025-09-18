@@ -38,8 +38,12 @@ export default class MainScene extends Phaser.Scene {
     physics!: Phaser.Physics.Arcade.ArcadePhysics;
     scale!: Phaser.Scale.ScaleManager;
     scene!: Phaser.Scenes.ScenePlugin;
+    // FIX: Corrected the type for `sound` to match the base `Phaser.Scene` type definition.
+    // The property on the Scene is a specific sound manager (e.g., WebAudioSoundManager), not the generic base class.
+    sound!: Phaser.Sound.NoAudioSoundManager | Phaser.Sound.HTML5AudioSoundManager | Phaser.Sound.WebAudioSoundManager;
     time!: Phaser.Time.Clock;
     tweens!: Phaser.Tweens.TweenManager;
+    cache!: Phaser.Cache.CacheManager;
 
     constructor() {
         super({ key: 'main' });
@@ -47,6 +51,9 @@ export default class MainScene extends Phaser.Scene {
 
     create() {
         this.score = 0;
+
+        // --- Play Main Music ---
+        this.playMainMusic();
 
         // --- Set World and Camera Bounds ---
         this.physics.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
@@ -101,6 +108,15 @@ export default class MainScene extends Phaser.Scene {
         this.scene.launch('ui');
         this.game.events.emit('updateScore', this.score);
         this.game.events.emit('updatePassengerCount', this.player.passengerCount, this.player.passengerCapacity);
+    }
+
+    private playMainMusic() {
+        this.sound.stopAll();
+        if (this.cache.audio.has('music-main')) {
+            this.sound.play('music-main', { loop: true, volume: 0.7 });
+        } else {
+            console.warn("Audio key 'music-main' not found. Music will not play. Check BootScene for loading errors.");
+        }
     }
 
     spawnPassenger(x: number, y: number) {
@@ -186,6 +202,14 @@ export default class MainScene extends Phaser.Scene {
     }
 
     handleGameOver() {
+        // --- Play Game Over Music ---
+        this.sound.stopAll();
+        if (this.cache.audio.has('music-title')) {
+            this.sound.play('music-title', { loop: true, volume: 0.7 });
+        } else {
+            console.warn("Audio key 'music-title' not found. Music will not play. Check BootScene for loading errors.");
+        }
+
         // Stop all physics and animations
         this.physics.pause();
         this.player.setTint(0xff0000);

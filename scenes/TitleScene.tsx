@@ -10,8 +10,12 @@ export default class TitleScene extends Phaser.Scene {
     add!: Phaser.GameObjects.GameObjectFactory;
     input!: Phaser.Input.InputPlugin;
     scene!: Phaser.Scenes.ScenePlugin;
+    // FIX: Corrected the type for `sound` to match the base `Phaser.Scene` type definition.
+    // The property on the Scene is a specific sound manager (e.g., WebAudioSoundManager), not the generic base class.
+    sound!: Phaser.Sound.NoAudioSoundManager | Phaser.Sound.HTML5AudioSoundManager | Phaser.Sound.WebAudioSoundManager;
     tweens!: Phaser.Tweens.TweenManager;
     scale!: Phaser.Scale.ScaleManager;
+    cache!: Phaser.Cache.CacheManager;
 
     constructor() {
         super({ key: 'title' });
@@ -61,57 +65,119 @@ export default class TitleScene extends Phaser.Scene {
         // Blinking effect for instructions
         this.tweens.add({
             targets: instructionGraphics,
-            alpha: 0,
-            duration: 800,
-            ease: 'Sine.easeInOut',
+            alpha: { from: 1, to: 0.3 },
+            ease: 'Sine.InOut',
+            duration: 1000,
             yoyo: true,
             repeat: -1
         });
+
+        // --- Audio Handling ---
+        // FIX: Reworked the audio unlock flow to be more robust using Phaser's `sound.locked` property.
+        if (this.sound.locked) {
+            const overlay = this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x000000, 0.7).setOrigin(0);
+            const text = this.add.text(centerX, centerY, 'Click to enable audio', { fontSize: '32px', color: '#ffffff', align: 'center' }).setOrigin(0.5);
+
+            // Once the user clicks, unlock the sound and play the music.
+            this.input.once('pointerdown', () => {
+                overlay.destroy();
+                text.destroy();
+                // The sound manager will be unlocked automatically by the first play call.
+                this.playTitleMusic();
+            }, this);
+        } else {
+            // If sound is already unlocked, just play the music.
+            this.playTitleMusic();
+        }
         
-        // --- Input to Start Game ---
+        // Listen for the spacebar to start the game
         this.input.keyboard.once('keydown-SPACE', () => {
             this.scene.start('main');
         });
     }
 
+    private playTitleMusic() {
+        // Stop any other music that might be playing (e.g., from a game over)
+        this.sound.stopAll();
+
+        if (this.cache.audio.has('music-title')) {
+            // Check isPlaying to prevent restarting the track if it's already running
+            if (!this.sound.get('music-title')?.isPlaying) {
+                this.sound.play('music-title', { loop: true, volume: 0.7 });
+            }
+        } else {
+            // This is a fallback warning. The error handler in BootScene should provide a more specific message.
+            console.warn("Audio key 'music-title' not found. Music will not play. Check BootScene for loading errors.");
+        }
+    }
+
     /**
-     * Draws text using vector lines for a retro arcade look.
+     * Helper function to draw text using lines, Atari vector-style.
      */
-    drawVectorText(graphics: Phaser.GameObjects.Graphics, text: string, x: number, y: number, size: number, thickness: number, color: number) {
+    drawVectorText(graphics: Phaser.GameObjects.Graphics, text: string, startX: number, startY: number, size: number, thickness: number, color: number) {
         graphics.lineStyle(thickness, color, 1);
-        const charWidth = size * 0.7;
-        const kerning = 1.2; // Increase spacing between letters
-        const totalWidth = (text.length * charWidth * kerning) - (charWidth * (kerning - 1));
-        let currentX = x - totalWidth / 2;
+        // FIX: Increased character spacing to prevent overlap and improved width calculation for accurate centering.
+        const charSpacing = size * 1.1; // Character width (size) + 10% for padding
+        const totalWidth = (text.length - 1) * charSpacing + size;
+        let currentX = startX - totalWidth / 2;
 
-        const charMap: { [key: string]: Array<[number, number, number, number]> } = {
-            'A': [[0.5, 0, 0, 1], [0.5, 0, 1, 1], [0.2, 0.5, 0.8, 0.5]],
-            'B': [[0, 0, 0, 1], [0, 0, 0.8, 0], [0.8, 0, 0.8, 0.5], [0.8, 0.5, 0, 0.5], [0.8, 0.5, 0.8, 1], [0.8, 1, 0, 1]],
-            'C': [[0.8, 0, 0, 0], [0, 0, 0, 1], [0, 1, 0.8, 1]],
-            'D': [[0, 0, 0, 1], [0, 0, 0.6, 0], [0.6, 0, 1, 0.5], [1, 0.5, 0.6, 1], [0.6, 1, 0, 1]],
-            'E': [[1, 0, 0, 0], [0, 0, 0, 1], [0, 1, 1, 1], [0, 0.5, 0.7, 0.5]],
-            'I': [[0.2, 0, 0.8, 0], [0.5, 0, 0.5, 1], [0.2, 1, 0.8, 1]],
-            'O': [[0, 0, 1, 0], [1, 0, 1, 1], [1, 1, 0, 1], [0, 1, 0, 0]],
-            'P': [[0, 1, 0, 0], [0, 0, 0.8, 0], [0.8, 0, 0.8, 0.5], [0.8, 0.5, 0, 0.5]],
-            'R': [[0, 1, 0, 0], [0, 0, 0.8, 0], [0.8, 0, 0.8, 0.5], [0.8, 0.5, 0, 0.5], [0.4, 0.5, 1, 1]],
-            'S': [[1, 0, 0, 0], [0, 0, 0, 0.5], [0, 0.5, 1, 0.5], [1, 0.5, 1, 1], [1, 1, 0, 1]],
-            'T': [[0, 0, 1, 0], [0.5, 0, 0.5, 1]],
-            'U': [[0, 0, 0, 1], [0, 1, 1, 1], [1, 1, 1, 0]],
-            'V': [[0, 0, 0.5, 1], [0.5, 1, 1, 0]],
-            ' ': [],
-        };
-
-        for (const char of text.toUpperCase()) {
-            const lines = charMap[char];
-            if (lines) {
+        for (const char of text) {
+            const letter = this.getVectorChar(char, size);
+            for (const shape of letter) {
                 graphics.beginPath();
-                for (const line of lines) {
-                    graphics.moveTo(currentX + line[0] * charWidth, y + line[1] * size);
-                    graphics.lineTo(currentX + line[2] * charWidth, y + line[3] * size);
+                graphics.moveTo(currentX + shape[0][0], startY + shape[0][1]);
+                for (let i = 1; i < shape.length; i++) {
+                    graphics.lineTo(currentX + shape[i][0], startY + shape[i][1]);
                 }
                 graphics.strokePath();
             }
-            currentX += charWidth * kerning;
+            currentX += charSpacing;
         }
+    }
+
+    /**
+     * Returns line coordinates for a character.
+     * A simple vector font definition.
+     */
+    getVectorChar(char: string, s: number): number[][][] {
+        // s: size
+        const c = char.toUpperCase();
+        const font: { [key: string]: number[][][] } = {
+            'A': [[ [0,s],[s/2,0],[s,s] ], [ [s/4,s/2],[s*3/4,s/2] ]],
+            'B': [[ [0,0],[s*3/4,0],[s,s/4],[s,s*3/4],[s*3/4,s],[0,s],[0,0] ], [ [0,s/2],[s*3/4,s/2] ]],
+            'C': [[ [s,0],[0,0],[0,s],[s,s] ]],
+            'D': [[ [0,0],[s*3/4,0],[s,s/4],[s,s*3/4],[s*3/4,s],[0,s],[0,0] ]],
+            'E': [[ [s,0],[0,0],[0,s],[s,s] ], [ [0,s/2],[s,s/2] ]],
+            'F': [[ [s,0],[0,0],[0,s] ], [ [0,s/2],[s,s/2] ]],
+            'G': [[ [s,0],[0,0],[0,s],[s,s],[s,s/2],[s/2,s/2] ]],
+            'H': [[ [0,0],[0,s] ], [ [s,0],[s,s] ], [ [0,s/2],[s,s/2] ]],
+            'I': [[ [0,0],[s,0] ], [ [s/2,0],[s/2,s] ], [ [0,s],[s,s] ]],
+            'L': [[ [0,0],[0,s],[s,s] ]],
+            'M': [[ [0,s],[0,0],[s/2,s/2],[s,0],[s,s] ]],
+            'N': [[ [0,s],[0,0],[s,s],[s,0] ]],
+            'O': [[ [0,0],[s,0],[s,s],[0,s],[0,0] ]],
+            'P': [[ [0,s],[0,0],[s,0],[s,s/2],[0,s/2] ]],
+            'R': [[ [0,s],[0,0],[s,0],[s,s/2],[0,s/2] ], [ [s/2,s/2],[s,s] ]],
+            'S': [[ [s,0],[0,0],[0,s/2],[s,s/2],[s,s],[0,s] ]],
+            'T': [[ [0,0],[s,0] ], [ [s/2,0],[s/2,s] ]],
+            'U': [[ [0,0],[0,s],[s,s],[s,0] ]],
+            'V': [[ [0,0],[s/2,s],[s,0] ]],
+            ' ': [],
+            '\'': [[ [s/2, 0], [s/2-s/8, s/4]]],
+            '!': [[ [s/2, 0], [s/2, s*2/3]], [ [s/2, s], [s/2, s*5/6]]],
+            '.': [[ [s/2, s], [s/2, s]]],
+            '-': [[ [s/4,s/2],[s*3/4,s/2] ]],
+            '1': [[ [s/2,0],[s/2,s],[s/4,s] ]],
+            '2': [[ [0,0],[s,0],[s,s/2],[0,s/2],[0,s],[s,s] ]],
+            '3': [[ [0,0],[s,0],[s,s],[0,s] ], [ [0,s/2],[s,s/2] ]],
+            '4': [[ [0,0],[0,s/2],[s,s/2] ], [ [s,0],[s,s] ]],
+            '5': [[ [s,0],[0,0],[0,s/2],[s,s/2],[s,s],[0,s] ]],
+            '6': [[ [s,0],[0,0],[0,s],[s,s],[s,s/2],[0,s/2] ]],
+            '7': [[ [0,0],[s,0],[s,s] ]],
+            '8': [[ [0,0],[s,0],[s,s],[0,s],[0,0] ], [ [0,s/2],[s,s/2] ]],
+            '9': [[ [0,s],[s,s],[s,0],[0,0],[0,s/2],[s,s/2] ]],
+            '0': [[ [0,0],[s,0],[s,s],[0,s],[0,0] ], [ [0,s/2],[s,s/2] ]],
+        };
+        return font[c] || [];
     }
 }
