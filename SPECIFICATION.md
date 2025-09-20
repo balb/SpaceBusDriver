@@ -75,7 +75,22 @@ All visual assets are generated programmatically (procedurally) at runtime.
     - **Bus Stop Planet:** A medium-sized orange circle.
     - **Terminus Planet:** A medium-sized green circle with a flag sticking out of its top. The flag is white and reads "Terminus" in black text.
 
-## 6. Technical Architecture
+## 6. Audio
+
+All audio in the game is generated procedurally at runtime using the Web Audio API, eliminating the need for external asset files and providing a cohesive, retro chiptune aesthetic.
+
+### 6.1. Music
+- **Title Music:** A slower, atmospheric 80s-style track plays on the title screen. It features a simple bassline and a sparse lead melody to create a sense of anticipation.
+- **Main Music:** During gameplay, an up-tempo, high-energy arcade-style track plays. It includes a driving bassline, a catchy lead melody, and synthesized percussion to create a feeling of action and urgency.
+
+### 6.2. Sound Effects
+- **Passenger Pickup:** A cheerful, rising three-note arpeggio plays when the player successfully picks up a passenger.
+- **Passenger Drop-off:** A distinct two-tone chime provides satisfying feedback when passengers are delivered to the Terminus.
+
+### 6.3. Audio Ducking
+To ensure important gameplay cues are always clear, the main music's volume automatically and smoothly decreases whenever a sound effect is played. The music volume returns to its normal level after the sound effect has finished.
+
+## 7. Technical Architecture
 
 - **Engine:** Phaser 3
 - **Language:** TypeScript

@@ -60,8 +60,10 @@ export const ANIMATIONS = {
 };
 
 export const AUDIO = {
-    TITLE_MUSIC: 'music-title',
-    MAIN_MUSIC: 'music-main',
+    MUSIC_TITLE: 'music-title',
+    MUSIC_MAIN: 'music-main',
+    SFX_PICKUP: 'sfx-pickup',
+    SFX_DROPOFF: 'sfx-dropoff',
 };
 
 export const EVENTS = {

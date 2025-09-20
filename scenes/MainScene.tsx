@@ -19,6 +19,7 @@ import {
 import Player from '../sprites/Player';
 import WorldBuilder from '../world/WorldBuilder';
 import EnemyManager from '../managers/EnemyManager';
+import SoundManager from '../managers/SoundManager';
 
 // --- Main Game Scene ---
 export default class MainScene extends Phaser.Scene {
@@ -115,12 +116,7 @@ export default class MainScene extends Phaser.Scene {
     }
 
     private playMainMusic() {
-        this.sound.stopAll();
-        if (this.cache.audio.has(AUDIO.MAIN_MUSIC)) {
-            this.sound.play(AUDIO.MAIN_MUSIC, { loop: true, volume: 0.7 });
-        } else {
-            console.warn(`Audio key '${AUDIO.MAIN_MUSIC}' not found. Music will not play. Check BootScene for loading errors.`);
-        }
+        SoundManager.getInstance().playMusic(AUDIO.MUSIC_MAIN);
     }
 
     spawnPassenger(x: number, y: number) {
@@ -134,6 +130,7 @@ export default class MainScene extends Phaser.Scene {
         const playerSprite = player as Player;
         // Attempt to pick up a passenger. The player method returns true if successful.
         if (playerSprite.pickupPassenger()) {
+            SoundManager.getInstance().playSoundEffect(AUDIO.SFX_PICKUP);
             const spawnX = passenger.body.x;
             const spawnY = passenger.body.y;
             
@@ -163,6 +160,10 @@ export default class MainScene extends Phaser.Scene {
             // Using the planet's radius (60) for the collision check.
             if (distanceToDest < 60 + 16) { // 16 is ~half player width
                 const numDroppedOff = this.player.dropOffAllPassengers();
+                
+                if (numDroppedOff > 0) {
+                    SoundManager.getInstance().playSoundEffect(AUDIO.SFX_DROPOFF);
+                }
                 
                 this.score += numDroppedOff * 10;
 
@@ -207,13 +208,8 @@ export default class MainScene extends Phaser.Scene {
     }
 
     handleGameOver() {
-        // --- Play Game Over Music ---
-        this.sound.stopAll();
-        if (this.cache.audio.has(AUDIO.TITLE_MUSIC)) {
-            this.sound.play(AUDIO.TITLE_MUSIC, { loop: true, volume: 0.7 });
-        } else {
-            console.warn(`Audio key '${AUDIO.TITLE_MUSIC}' not found. Music will not play. Check BootScene for loading errors.`);
-        }
+        // --- Play Game Over Music (switch back to title theme) ---
+        SoundManager.getInstance().playMusic(AUDIO.MUSIC_TITLE);
 
         // Stop all physics and animations
         this.physics.pause();

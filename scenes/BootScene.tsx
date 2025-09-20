@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import * as Phaser from 'phaser';
-import { SCENES, AUDIO, TEXTURES, ANIMATIONS } from '../constants';
+import { SCENES, TEXTURES, ANIMATIONS } from '../constants';
 
 // --- Boot Scene (for generating assets) ---
 export default class BootScene extends Phaser.Scene {
@@ -19,21 +19,8 @@ export default class BootScene extends Phaser.Scene {
     }
 
     preload() {
-        // Set the base URL for all subsequent asset loads. This is the "proper"
-        // Phaser way to manage asset paths, making them easier to maintain.
-        this.load.setBaseURL('https://cdn.jsdelivr.net/gh/balb/SpaceBusDriver@main/assets/');
-
-        // FIX: Add a listener to catch file loading errors, especially for audio.
-        // This provides clear feedback in the console if MP3 files are missing.
-        this.load.on('loaderror', (file: Phaser.Loader.File) => {
-            if (file.type === 'audio') {
-                console.error(`Error loading audio: ${file.key}. URL: ${file.url}. Check that the file exists and the path is correct in your project structure.`);
-            }
-        });
-        
-        // Load music using paths relative to the new base URL.
-        this.load.audio(AUDIO.TITLE_MUSIC, 'audio/galactic-pulse.mp3');
-        this.load.audio(AUDIO.MAIN_MUSIC, 'audio/galactic-rush.mp3');
+        // No assets need to be preloaded. All visual assets are generated
+        // procedurally, and audio is synthesized at runtime.
     }
 
     create() {

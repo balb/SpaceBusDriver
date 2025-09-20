@@ -4,6 +4,7 @@
 */
 import * as Phaser from 'phaser';
 import { SCENES, AUDIO } from '../constants';
+import SoundManager from '../managers/SoundManager';
 
 // --- Title Scene (Atari-style) ---
 export default class TitleScene extends Phaser.Scene {
@@ -74,42 +75,37 @@ export default class TitleScene extends Phaser.Scene {
         });
 
         // --- Audio Handling ---
-        // FIX: Reworked the audio unlock flow to be more robust using Phaser's `sound.locked` property.
+        const soundManager = SoundManager.getInstance();
+
+        const initializeAndPlayMusic = () => {
+            // Attempt to initialize the audio context (if not already done).
+            // This must be called from a user gesture for browsers to allow it.
+            if (soundManager.initialize()) {
+                soundManager.playMusic(AUDIO.MUSIC_TITLE);
+            }
+        };
+
+        // Reworked the audio unlock flow to use the custom SoundManager.
+        // `this.sound.locked` is still a good indicator of whether a user gesture has occurred.
         if (this.sound.locked) {
             const overlay = this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x000000, 0.7).setOrigin(0);
-            const text = this.add.text(centerX, centerY, 'Click to enable audio', { fontSize: '32px', color: '#ffffff', align: 'center' }).setOrigin(0.5);
+            const text = this.add.text(centerX, centerY, 'Click to begin', { fontSize: '32px', color: '#ffffff', align: 'center' }).setOrigin(0.5);
 
-            // Once the user clicks, unlock the sound and play the music.
+            // Once the user clicks, initialize the audio context and play music.
             this.input.once('pointerdown', () => {
                 overlay.destroy();
                 text.destroy();
-                // The sound manager will be unlocked automatically by the first play call.
-                this.playTitleMusic();
+                initializeAndPlayMusic();
             }, this);
         } else {
             // If sound is already unlocked, just play the music.
-            this.playTitleMusic();
+            initializeAndPlayMusic();
         }
         
         // Listen for the spacebar to start the game
         this.input.keyboard.once('keydown-SPACE', () => {
             this.scene.start(SCENES.MAIN);
         });
-    }
-
-    private playTitleMusic() {
-        // Stop any other music that might be playing (e.g., from a game over)
-        this.sound.stopAll();
-
-        if (this.cache.audio.has(AUDIO.TITLE_MUSIC)) {
-            // Check isPlaying to prevent restarting the track if it's already running
-            if (!this.sound.get(AUDIO.TITLE_MUSIC)?.isPlaying) {
-                this.sound.play(AUDIO.TITLE_MUSIC, { loop: true, volume: 0.7 });
-            }
-        } else {
-            // This is a fallback warning. The error handler in BootScene should provide a more specific message.
-            console.warn(`Audio key '${AUDIO.TITLE_MUSIC}' not found. Music will not play. Check BootScene for loading errors.`);
-        }
     }
 
     /**
